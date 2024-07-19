@@ -3,3 +3,4 @@ project(experimentations)
 
 # add_subdirectory(ide)
 add_subdirectory(hardwaresim)
+add_subdirectory(opencv)
