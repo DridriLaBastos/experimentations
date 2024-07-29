@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<module type="JAVA_MODULE" version="4">
+  <component name="NewModuleRootManager" inherit-compiler-output="true">
+    <exclude-output />
+    <content url="file://$MODULE_DIR$">
+      <sourceFolder url="file://$MODULE_DIR$/src" isTestSource="false" />
+    </content>
+    <orderEntry type="inheritedJdk" />
+    <orderEntry type="sourceFolder" forTests="false" />
+    <orderEntry type="library" name="KotlinJavaRuntime" level="project" />
+    <orderEntry type="module" module-name="user_interface" />
+    <orderEntry type="module-library">
+      <library name="openjfx.javafx.fxml" type="repository">
+        <properties maven-id="org.openjfx:javafx-fxml:22" />
+        <CLASSES>
+          <root url="jar://$MAVEN_REPOSITORY$/org/openjfx/javafx-fxml/22/javafx-fxml-22.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/openjfx/javafx-fxml/22/javafx-fxml-22-mac-aarch64.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/openjfx/javafx-controls/22/javafx-controls-22.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/openjfx/javafx-controls/22/javafx-controls-22-mac-aarch64.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/openjfx/javafx-graphics/22/javafx-graphics-22.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/openjfx/javafx-graphics/22/javafx-graphics-22-mac-aarch64.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/openjfx/javafx-base/22/javafx-base-22.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/openjfx/javafx-base/22/javafx-base-22-mac-aarch64.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES />
+      </library>
+    </orderEntry>
+  </component>
+</module>
