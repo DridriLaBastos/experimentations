@@ -1,5 +1,8 @@
 cmake_minimum_required(VERSION 3.10)
 project(experimentations)
 
-add_subdirectory(hardwaresim)
+set(CMAKE_CXX_STANDARD 17)
+
+add_subdirectory(nn)
 add_subdirectory(opencv)
+add_subdirectory(hardwaresim)
