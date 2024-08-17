@@ -5,16 +5,25 @@
 #include <cstdio>
 #include <cstdlib>
 
-#include "vec.hpp"
+#include "ppm.hpp"
+#include "colors.hpp"
+
+constexpr size_t IMAGE_WIDTH = 720;
+constexpr size_t IMAGE_HEIGHT = 480;
 
 int main(void)
 {
-	UVec4 p1,p2;
+	PPMUtil ppm (IMAGE_WIDTH,IMAGE_HEIGHT);
 
-	p2.pos.x += 1;
+	for (size_t y = 0; y < ppm.height; y += 1)
+	{
+		for (size_t x = 0; x < ppm.width; x += 1)
+		{
+			ppm.at(x,y) = Colors::BLUE;
+		}
+	}
 
-	p1.val += p2.val;
+	ppm.write("test.ppm");
 
-	printf("%.2f   %.2f   %.2f   %.2f\t",p1.pos.x,p1.pos.y,p1.pos.z,p1.pos.t);
 	return EXIT_SUCCESS;
 }

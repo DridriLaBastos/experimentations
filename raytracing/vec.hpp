@@ -20,6 +20,11 @@ union UVec4
 	} pos;
 
 	explicit UVec4(const float _x = .0f, const float _y = .0f, const float _z = .0f, const float _t = .0f): val{_x,_y,_z,_t} {}
+
+	void Round(void)
+	{
+		val = vrndaq_f32(val);
+	}
 };
 
 #endif //EXPERIMENTATIONS_VEC_HPP
