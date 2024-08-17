@@ -10,7 +10,7 @@
 
 #include <cstddef>
 
-#include "vec.hpp"
+#include "simdvec.hpp"
 
 class PPMUtil
 {
