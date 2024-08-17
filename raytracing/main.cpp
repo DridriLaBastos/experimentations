@@ -6,10 +6,11 @@
 #include <cstdlib>
 
 #include "ppm.hpp"
-#include "colors.hpp"
+#include "color.hpp"
 
 constexpr size_t IMAGE_WIDTH = 720;
 constexpr size_t IMAGE_HEIGHT = 480;
+
 
 int main(void)
 {
@@ -19,11 +20,13 @@ int main(void)
 	{
 		for (size_t x = 0; x < ppm.width; x += 1)
 		{
-			ppm.at(x,y) = Colors::BLUE;
+			const float r = (float)y / (ppm.height - 1);
+			const float g = (float)x / (ppm.width - 1);
+			ppm.at(x,y) = Color (r,g);
 		}
 	}
 
-	ppm.write("test.ppm");
+	ppm.write("test.ppm",12);
 
 	return EXIT_SUCCESS;
 }

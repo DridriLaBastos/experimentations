@@ -8,7 +8,7 @@
 
 #include "ppm.hpp"
 
-PPMUtil::PPMUtil(const size_t w, const size_t h): height(h), width(w), m_buffer(new UVec4 [h*w])
+PPMUtil::PPMUtil(const size_t w, const size_t h): height(h), width(w), size(h*w), m_buffer(new UVec4 [h*w])
 {
 }
 

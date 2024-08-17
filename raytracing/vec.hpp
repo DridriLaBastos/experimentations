@@ -27,4 +27,11 @@ union UVec4
 	}
 };
 
+inline UVec4 operator+ (const UVec4& v1, const UVec4& v2)
+{
+	UVec4 ret;
+	ret.val = v1.val + v2.val;
+	return ret;
+}
+
 #endif //EXPERIMENTATIONS_VEC_HPP

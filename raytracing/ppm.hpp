@@ -23,7 +23,7 @@ public:
 	void write (const std::filesystem::path& path, const uint16_t maxColor = 256);
 
 public:
-	const size_t width, height;
+	const size_t width, height, size;
 	std::unique_ptr<UVec4> m_buffer;
 };
 
