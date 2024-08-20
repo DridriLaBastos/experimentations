@@ -1,4 +1,12 @@
-use std::net::TcpListener;
+use std::{io::{BufRead, BufReader}, net::{TcpListener, TcpStream}};
+
+fn handle_connection(stream: TcpStream)
+{
+	let buf_reader = BufReader::new(stream);
+	let http_request: Vec<_> = buf_reader.lines().map(|result| result.unwrap()).take_while(|line| !line.is_empty()).collect();
+
+	println!("Got request: {http_request:#?}");
+}
 
 fn server_loop(listener: TcpListener)
 {
@@ -6,7 +14,7 @@ fn server_loop(listener: TcpListener)
 	{
 		match stream
 		{
-			Ok(s) => println!("Connection established {s:?}"),
+			Ok(s) => handle_connection(s),
 			Err(e) => panic!("Unable to create a connection : {e:?}"),
 		}
 	}
