@@ -13,34 +13,26 @@ mov ax, 0x7FF0
 mov ss, ax
 mov sp, 0x100
 
-; Reset video mode to 80*25
-; mov ax, 0x3
-; int 0x10
-
-;Reset disk system
-; xor ax, ax
-;The BIOS set ds to the boot device
-; int 0x13
-
 ;Then loads the 2 next sectors
-;The datas will be written in memory after this bootsector
-;ES have been set at the begining of the program
-; mov bx, 512
+;The datas will be written at the begining of the available memory at 0x50:0 (0x500)
+mov ax, 0x50
+mov es, ax
+xor bx, bx
 
-; mov ax, 0x0202	;ah = BIOS Function (2 = read sectors) al = # of sectors to read: arbitrarly 2
-; mov cx, 0x0002	;ch = Cylinder 0 cl = sector 2
-; mov dh, 0		;dh = head 0 dl = boot drive (dl is set by the BIOS)
-; int 0x13
-; jc _error
-; mov ax, 512
-; jmp ax
+mov ax, 0x0202	;ah = BIOS Function (2 = read sectors) al = # of sectors to read: arbitrarly 2
+mov cx, 0x0002	;ch = Cylinder 0 cl = sector 2
+mov dh, 0		;dh = head 0 dl = boot drive (dl is set by the BIOS)
+int 0x13
+jc _error
 
-; _error:
-; ;In case of error display an error message, disable interrupts and then halt the cpu
-; mov si, data.error_message
-; call print
+; The data loaded are an elf file. Now that the elf is loaded in RAM we need to switch
+; to protected mode to be abble to execute it
 
-mov si, data.message
+jmp 0x50:0
+
+_error:
+;In case of error display an error message, disable interrupts and then halt the cpu
+mov si, data.error_message
 call print
 
 cli
@@ -63,7 +55,8 @@ print:
 		ret
 
 data:
-.message: db "Hello world",10,13,0
+.error_message: db "[FATAL ERROR] Unable to load the program",10,13,0
+.gdt: dd 0,0; first entry in the gdt must be null
 
 times 510 - ($ - $$) db 0
 dw 0xAA55

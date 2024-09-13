@@ -1,2 +1,3 @@
 floppya: 1_44=pong.floppy, status=inserted
 boot: a
+magic_break: enabled=1
