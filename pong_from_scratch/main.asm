@@ -74,29 +74,50 @@ out dx, al
 ;TODO: Need to perform the x calculation but it will do for now
 %macro DRAW_HLINE 4
 
-	%assign COL (%4 & 0b11)
+	%assign COL ((%4) & 0b11)
 
 	mov ax, %eval(COL << 6 | COL << 4 | COL << 2 | COL)
 	mov bx, %eval(%cond((%3) % 2 == 0,0,0x2000) + ((%3)/2) * SCREEN_WIDTH/4 + (%1)/4)
 	
-	push cx
 	mov cx, ((%2) - (%1)) / 4
 	%%draw:
 		mov byte [es:bx], al
 		inc bx
 		loop %%draw
-	pop cx
 %endmacro
 
 ; Draw a line vertically
-; %1 start y
-; %2 end y
+; %1 y_start
+; %2 y_end
 ; %3 x
 ; %4 color
 %macro DRAW_VLINE 4
-	mov cx, %eval(%2 - %1)
-	mov bx, %cond(%1 % 2 == 0,0,0x2000)
-	%%drawin:
+	%assign COLOR ((%4) & 0b11)
+
+	mov cx, (%2) - (%1)
+	%%drawing:
+		mov bx, (%2)
+		sub bx, cx		; contains the current line computed from y_end
+
+		mov ax, 0x2000
+		mov dx, bx
+		and dx, 0b1
+		mul dx			; if current line is odd ax contains 0, otherwise ax contains 0x2000
+		mov bp, ax		; saving the value so all other registers can be used
+
+		mov ax, SCREEN_WIDTH
+		mul bx
+		shr ax,1
+		shr ax,1
+		shr ax,1
+		add bp, ax
+
+		mov al, [es:bp]
+
+		and ax, ~(0b11 << (8 - 2*(%3)))
+		mov dx, COLOR << (8 - 2*(%3))
+		or ax, dx
+		mov  [es:bp], al
 
 		loop %%drawing
 
@@ -120,14 +141,16 @@ mov ax, 0b100000
 mov dx, COLOR_SELECT_REGISTER_PORT
 out dx, ax
 
-; clearing the screen
-
 mov cx, 8000
 mov ax, 0xB800
 mov es, ax
 
 DRAW_HLINE 0,SCREEN_WIDTH,0,0b11
 DRAW_HLINE 0,SCREEN_WIDTH,1,0b11
+
+DRAW_VLINE 3,SCREEN_HEIGH-1-1,1,0b11
+xchg bx, bx
+DRAW_VLINE 2,SCREEN_HEIGH-1-1,2,0b11
 
 DRAW_HLINE 0,SCREEN_WIDTH,SCREEN_HEIGH-2,0b11
 DRAW_HLINE 0,SCREEN_WIDTH,SCREEN_HEIGH-1,0b11
