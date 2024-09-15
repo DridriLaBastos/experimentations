@@ -6,6 +6,9 @@
 %define MODE_SELECT_REGISTER_PORT 0x3D8
 %define COLOR_SELECT_REGISTER_PORT 0x3D9
 
+%define SCREEN_WIDTH 320
+%define SCREEN_HEIGH 200
+
 ; Macro for output data to the CRT device
 ; - %1 index of the crt register
 ; - %2 data to write
@@ -21,64 +24,115 @@ out dx, al
 
 %endmacro
 
-; Setting up graphic mode as medium resolution 320x200 graphic
-; The sequence of events is described in the IBM PC documentation
-; 2 - 60
-;
-; 1 - Determine mode of operation : we want CGA 320x200 APA (All Point Addressable)
-; fetch more info
+; Write a pel at the specified location
+; Register modified: AX, BX, CX, DI
+; %1 pos x
+; %2 pos y
+; %3 2 bits color
+%macro WRITE_PEL 3
+	; even lines start at memory location 0
+	; odd  lines start at memory location 8000
+	;
+	mov di, %2	;contains Y coordinate
+	mov dx, di	;contains Y coordinate
+	and dx, 0b1	;0 on even Y coordinate and 1 on odd coordinate
+	mov ax, 0x2000
+	mul dx		;0 on even Y and 8000 on odd Y
+	shr di, 1	;divide by 2
+	add di, ax	;8000+Y = memory location of the line to write
 
-; 2 - Reset video mode
-; Done by putting a 0 in the 3rd bit of the mode register
-mov ax, 0
-mov dx, MODE_SELECT_REGISTER_PORT
-out dx, al
+	mov ax, %1
+	mov bx, 4	;al will contain the quotient (coordinate in the line of the pel)
+	div bl		;ah will contain the remainer (position in the 4bits pel of the requested pel)
 
-; 3 - program the 6845 registers for graphic mode
-; Following IBM documentation page 2 - 56
-LOAD_CRT_DATA 0x0, 0x38
-LOAD_CRT_DATA 0x1, 0x28
-LOAD_CRT_DATA 0x2, 0x2D
-LOAD_CRT_DATA 0x3, 0x0A
-LOAD_CRT_DATA 0x4, 0x7F
-LOAD_CRT_DATA 0x5, 0x06
-LOAD_CRT_DATA 0x6, 0x64
-LOAD_CRT_DATA 0x7, 0x70
-LOAD_CRT_DATA 0x8, 0x02
-LOAD_CRT_DATA 0x9, 0x01
-LOAD_CRT_DATA 0xA, 0x06
-LOAD_CRT_DATA 0xB, 0x07
-LOAD_CRT_DATA 0xC,    0
-LOAD_CRT_DATA 0xD,    0
+	;cl is the only register available for variadic shift so we want ah in it
+	;but I want it ti hold the amount of shift to the left because first pel is at bits 6-7
+	mov cl, 4	;
+	sub cl, ah	;
+	
+	xor bx, bx
+	mov bl, al
+	add di, bx 	;Now di contains the address of 4 pel bytes where to write the asked pel
 
-; 3 - Configure the mode select and color select register
+	mov dl, [es:di]	;dl contains the 4pel data bytes
+	mov al, 0b11
+	shl al, cl
+	not al
+	and dl, al
+	mov al, %3
+	shl al, cl
+	or dl, al
+	mov [es:di], dl
 
-; 3.1 - Programming the color select register
+%endmacro
+
+; Draw a line from the begining of the start offset to the end
+; %1 start x
+; %2 end x
+; %3 y
+; %4 col
+;TODO: Need to perform the x calculation but it will do for now
+%macro DRAW_HLINE 4
+
+	%assign COL (%4 & 0b11)
+
+	mov ax, %eval(COL << 6 | COL << 4 | COL << 2 | COL)
+	mov bx, %eval(%cond((%3) % 2 == 0,0,0x2000) + ((%3)/2) * SCREEN_WIDTH/4 + (%1)/4)
+	
+	push cx
+	mov cx, ((%2) - (%1)) / 4
+	%%draw:
+		mov byte [es:bx], al
+		inc bx
+		loop %%draw
+	pop cx
+%endmacro
+
+; Draw a line vertically
+; %1 start y
+; %2 end y
+; %3 x
+; %4 color
+%macro DRAW_VLINE 4
+	mov cx, %eval(%2 - %1)
+	mov bx, %cond(%1 % 2 == 0,0,0x2000)
+	%%drawin:
+
+		loop %%drawing
+
+%endmacro
+
+; Setting up graphic mode as medium resolution 320x200 graphic using bios interrupt
+; bochs doesn't simulate a 5150 PC so I can't rely on the 5150 documentation.
+; instead I use interrupt 10
+push sp
+mov ax, 0x4; ah = 0 selecte graphic mode  al = 4 CGA 320x200 4 colors
+int 0x10
+pop sp
+
+; Programming the color select register
 ; This register will configure the background color
-; We want a black background so we put a 0 on bit 5 (0 or 1 as no differences)
+; We want a black background
 ; to configure the colors by bit 0-3 (b g r i).
 ; To have a black background b g r bits are set to 0, and just to be fun we
 ; intensify the border color (bit 3 = 1)
-mov ax, 0
+mov ax, 0b100000
 mov dx, COLOR_SELECT_REGISTER_PORT
 out dx, ax
-
-; 3.2 We enable the requested video (value taken from IBM doc 2 - 59)
-mov ax, 0b010101 ;0 at the end to disable blink attribute
-mov dx, MODE_SELECT_REGISTER_PORT
-out dx, al
 
 ; clearing the screen
 
 mov cx, 8000
 mov ax, 0xB800
 mov es, ax
-xor bx, bx
-clear_screen:
-	mov byte [es:bx], 0
-	inc bx
-	inc bx
-	loop clear_screen
+
+DRAW_HLINE 0,SCREEN_WIDTH,0,0b11
+DRAW_HLINE 0,SCREEN_WIDTH,1,0b11
+
+DRAW_HLINE 0,SCREEN_WIDTH,SCREEN_HEIGH-2,0b11
+DRAW_HLINE 0,SCREEN_WIDTH,SCREEN_HEIGH-1,0b11
+
+; mov word [es:320/4 * 2]
 
 cli
 hlt
