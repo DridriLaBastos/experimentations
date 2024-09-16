@@ -105,11 +105,8 @@ out dx, al
 		mul dx			; if current line is odd ax contains 0, otherwise ax contains 0x2000
 		mov bp, ax		; saving the value so all other registers can be used
 
-		mov ax, SCREEN_WIDTH
+		mov ax, SCREEN_WIDTH/4
 		mul bx
-		shr ax,1
-		shr ax,1
-		shr ax,1
 		add bp, ax
 
 		mov al, [es:bp]
@@ -120,7 +117,6 @@ out dx, al
 		mov  [es:bp], al
 
 		loop %%drawing
-
 %endmacro
 
 ; Setting up graphic mode as medium resolution 320x200 graphic using bios interrupt
