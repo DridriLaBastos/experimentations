@@ -106,6 +106,7 @@ out dx, al
 		mov bp, ax		; saving the value so all other registers can be used
 
 		mov ax, SCREEN_WIDTH/4
+		shr bx, 1
 		mul bx
 		add bp, ax
 
@@ -150,8 +151,6 @@ DRAW_VLINE 2,SCREEN_HEIGH-1-1,2,0b11
 
 DRAW_HLINE 0,SCREEN_WIDTH,SCREEN_HEIGH-2,0b11
 DRAW_HLINE 0,SCREEN_WIDTH,SCREEN_HEIGH-1,0b11
-
-; mov word [es:320/4 * 2]
 
 cli
 hlt
