@@ -110,10 +110,12 @@ out dx, al
 		mul bx
 		add bp, ax
 
+		add bp, %3/4
+
 		mov al, [es:bp]
 
-		and ax, ~(0b11 << (8 - 2*(%3)))
-		mov dx, COLOR << (8 - 2*(%3))
+		and ax, ~(0b11 << (8 - 2*(%3 % 4)))
+		mov dx, COLOR << (8 - 2*(%3 % 4))
 		or ax, dx
 		mov  [es:bp], al
 
@@ -145,9 +147,12 @@ mov es, ax
 DRAW_HLINE 0,SCREEN_WIDTH,0,0b11
 DRAW_HLINE 0,SCREEN_WIDTH,1,0b11
 
-DRAW_VLINE 3,SCREEN_HEIGH-1-1,1,0b11
-xchg bx, bx
-DRAW_VLINE 2,SCREEN_HEIGH-1-1,2,0b11
+; xchg bx, bx
+DRAW_VLINE 0,SCREEN_HEIGH-1,0,0b11
+DRAW_VLINE 0,SCREEN_HEIGH-1,1,0b10
+DRAW_VLINE 0,SCREEN_HEIGH-1,2,0b01
+DRAW_VLINE 0,SCREEN_HEIGH-1,3,0b11
+DRAW_VLINE 0,SCREEN_HEIGH-1,4,0b10
 
 DRAW_HLINE 0,SCREEN_WIDTH,SCREEN_HEIGH-2,0b11
 DRAW_HLINE 0,SCREEN_WIDTH,SCREEN_HEIGH-1,0b11
