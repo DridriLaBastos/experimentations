@@ -66,26 +66,6 @@ out dx, al
 
 %endmacro
 
-; Draw a line from the begining of the start offset to the end
-; %1 start x
-; %2 end x
-; %3 y
-; %4 col
-;TODO: Need to perform the x calculation but it will do for now
-%macro DRAW_HLINE 4
-
-	%assign COL ((%4) & 0b11)
-
-	mov ax, %eval(COL << 6 | COL << 4 | COL << 2 | COL)
-	mov bx, %eval(%cond((%3) % 2 == 0,0,0x2000) + ((%3)/2) * SCREEN_WIDTH/4 + (%1)/4)
-	
-	mov cx, ((%2) - (%1)) / 4
-	%%draw:
-		mov byte [es:bx], al
-		inc bx
-		loop %%draw
-%endmacro
-
 ; Draw a line vertically
 ; %1 y_start
 ; %2 y_end
@@ -122,6 +102,9 @@ out dx, al
 		loop %%drawing
 %endmacro
 
+%define PARAM(N) [bp + (N+1)*2]
+%define ARG(N)   [bp + (N+2)*2]
+
 ; Setting up graphic mode as medium resolution 320x200 graphic using bios interrupt
 ; bochs doesn't simulate a 5150 PC so I can't rely on the 5150 documentation.
 ; instead I use interrupt 10
@@ -129,6 +112,15 @@ push sp
 mov ax, 0x4; ah = 0 selecte graphic mode  al = 4 CGA 320x200 4 colors
 int 0x10
 pop sp
+
+; Resetting the stack at the end of the available memory
+; First byte of the stack aligned on even address :
+;  ss << 4 + sp => 0x7F00 << 4 + 0xFFE => 0x7F000 + 0xFFE=> 0x7FFFE
+; Last byte of the stack when sp = 0
+mov ax, 0x7F00
+mov ss, ax
+mov sp, 0xFFE
+mov bp, sp
 
 ; Programming the color select register
 ; This register will configure the background color
@@ -144,8 +136,32 @@ mov cx, 8000
 mov ax, 0xB800
 mov es, ax
 
+; Draw a line horizontally
+; %3 col
+; %2 y
+; %1 x_end
+; %0 x_start
+%macro DRAW_HLINE 4
+	push %3
+	push %2
+	push %1
+	push %0
+	call draw_hline
+%endmacro
+
 DRAW_HLINE 0,SCREEN_WIDTH,0,0b11
+
+;TODO: Can optimized by directly modifying values in the stack
+pop ax
+pop ax
+pop ax
+pop ax
+
 DRAW_HLINE 0,SCREEN_WIDTH,1,0b11
+pop ax
+pop ax
+pop ax
+pop ax
 
 DRAW_VLINE SCREEN_HEIGH/2-5,SCREEN_HEIGH/2+5,3,0b11
 
@@ -153,8 +169,86 @@ DRAW_VLINE 2,SCREEN_HEIGH-1,SCREEN_WIDTH/2,0b11
 
 DRAW_VLINE SCREEN_HEIGH/2-5,SCREEN_HEIGH/2+5,SCREEN_WIDTH-4,0b11
 
-DRAW_HLINE 0,SCREEN_WIDTH,SCREEN_HEIGH-2,0b11
-DRAW_HLINE 0,SCREEN_WIDTH,SCREEN_HEIGH-1,0b11
+; push word 0b11
+; push word SCREEN_HEIGH-2
+; push word SCREEN_WIDTH
+; push word 0
+; call draw_hline
+
+; push word 0
+; push word SCREEN_WIDTH
+; push word SCREEN_HEIGH-1
+; push word 0b11
+; call draw_hline
 
 cli
 hlt
+
+%macro STACK_GUARD 0
+	push bp
+	mov bp, sp
+%endmacro
+
+%define STACK_RELEASE pop bp
+
+; Putting all the functions at the end so there are not ran when jumping into the top of the file
+; parameters are popped from the stack
+; Draw a line from the begining of the start offset to the end
+; %3 col
+; %2 y
+; %1 x_end
+; %0 x_start
+;TODO: Need to perform the x calculation but it will do for now
+draw_hline:
+	STACK_GUARD
+
+	; puting the color in the whole al register (temporary for simplicity)
+	mov ax, ARG(3)
+	mov bx, ax
+	shl bx, 1
+	shl bx, 1
+	or ax, bx
+	or bx, ax
+	shl bx, 1
+	shl bx, 1
+	shl bx, 1
+	shl bx, 1
+	or ax, bx
+	mov di, ax ; Saving the computed color value in the DI register to access it quicker instead of pushing it
+
+	; * Computing (%2) % 2 == 0,0,0x2000) + ((%2)/2) * SCREEN_WIDTH/4 + (%0)/4)
+	mov bx, ARG(2) ; Saving %2 in a register for later use
+
+	; ** Computing (%2) % 2 == 0,0,0x2000)
+	mov ax, 0x2000
+	mov dx, bx
+	and dx, 0b1
+	mul dx
+	mov si, ax ; Saving the result in the si register
+
+	; ** Computing ((%2)/2) * SCREEN_WIDTH/4
+	shr bx, 1		; param %2 is not used anymore so we can alter the value in bx
+	mov ax, SCREEN_WIDTH/4
+	mul bx
+	add si, ax
+	xchg bx, bx
+	; ** Computing (%0)/4)
+	mov ax, ARG(0)	; Retrieving the value of %0
+	mov bx, ax		; %0 saved for next step
+	shr ax, 1
+	shr ax, 1		; dividing by 4
+	add si, ax
+
+	; Dividing cx by 4 because there is 4 pel per bytes
+	mov cx, ARG(1)
+	sub cx, bx 		; bx contains %0 from previous step
+	shr cx, 1
+	shr cx, 1
+	mov ax, di
+	.draw:
+		mov byte [es:si], al
+		inc si
+		loop .draw
+	
+	STACK_RELEASE
+	ret
