@@ -66,42 +66,6 @@ out dx, al
 
 %endmacro
 
-; Draw a line vertically
-; %1 y_start
-; %2 y_end
-; %3 x
-; %4 color
-%macro DRAW_VLINE 4
-	%assign COLOR ((%4) & 0b11)
-
-	mov cx, (%2) - (%1)
-	%%drawing:
-		mov bx, (%2)
-		sub bx, cx		; contains the current line computed from y_end
-
-		mov ax, 0x2000
-		mov dx, bx
-		and dx, 0b1
-		mul dx			; if current line is odd ax contains 0, otherwise ax contains 0x2000
-		mov bp, ax		; saving the value so all other registers can be used
-
-		mov ax, SCREEN_WIDTH/4
-		shr bx, 1
-		mul bx
-		add bp, ax
-
-		add bp, %3/4
-
-		mov al, [es:bp]
-
-		and ax, ~(0b11 << (6 - 2*((%3) % 4)))
-		mov dx, COLOR << (6 - 2*((%3) % 4))
-		or ax, dx
-		mov  [es:bp], al
-
-		loop %%drawing
-%endmacro
-
 %define PARAM(N) [bp + (N+1)*2]
 %define ARG(N)   [bp + (N+2)*2]
 
@@ -154,8 +118,29 @@ mov es, ax
 	pop ax
 %endmacro
 
+; Draw a line vertically
+; %1 y_start
+; %2 y_end
+; %3 x
+; %4 col
+%macro DRAW_VLINE 4
+	push %4
+	push %3
+	push %2
+	push %1
+	call draw_vline
+	;TODO: Can optimized by directly modifying values in the stack
+	pop ax
+	pop ax
+	pop ax
+	pop ax
+%endmacro
+
 DRAW_HLINE 0,SCREEN_WIDTH,0,0b11
 DRAW_HLINE 0,SCREEN_WIDTH,1,0b11
+
+xchg bx, bx
+DRAW_VLINE SCREEN_HEIGH/2-3,SCREEN_HEIGH/2+3,0,0b11
 
 DRAW_HLINE 0,SCREEN_WIDTH,SCREEN_HEIGH-2,0b11
 DRAW_HLINE 0,SCREEN_WIDTH,SCREEN_HEIGH-1,0b11
@@ -241,10 +226,88 @@ draw_hline:
 	shr cx, 1
 	shr cx, 1
 	mov ax, di
-	.draw:
+	.draw_loop:
 		mov byte [es:si], al
 		inc si
-		loop .draw
+		loop .draw_loop
 	
 	STACK_RELEASE
 	ret
+
+; Draw a line vertically
+; %3 color
+; %2 x
+; %1 y_end
+; %0 y_start
+draw_vline:
+	STACK_GUARD
+
+	; first compute the amount of time the loop will be run by putting 
+	; %1 - %0 into cx
+	mov ax, ARG(0)
+	mov cx, ARG(1)
+	sub cx, ax
+
+	.draw_loop:
+		mov bx, ARG(1)
+		sub bx, cx		; contains the current line computed from y_end
+
+		mov ax, 0x2000
+		mov dx, bx
+		and dx, 0b1
+		mul dx			; if current line is odd ax contains 0, otherwise ax contains 0x2000
+		mov bp, ax		; saving the value so all other registers can be used
+
+		mov ax, SCREEN_WIDTH/4
+		shr bx, 1
+		mul bx
+		add bp, ax
+
+		mov ax, ARG(1)
+		shr ax,1
+		shr ax,1
+		add bp, ax
+
+		; * Compute the position in the color 
+		mov al, [es:bp] ; Get the current 4 bytes containing the PEL color data
+
+		; ** Compute the mask containing the position of the requested pel data given by the formula
+		;    ~(0b11 << (6 - 2*((%2) % 4)))
+		;
+		; *** First compute the value (6 - 2*((%2) % 4)) the gives the amount of time to
+		;     shift the color data to put it in the right position for the requested PEL
+		;
+		; **** Compute 2*((%2) % 4)
+		mov ax, ARG(2)
+		mov dx, 4
+		div dx ; ah contains ax % 4 and al contains ax // 4
+		mov al, ah
+		xor ah, ah
+		shl ax, 1
+
+		; **** compute 6 - value
+		mov si, cx	; Saving the value of cx because will need the variable version of he shl
+					; instructions that only uses the cx register
+		mov cx, 6
+		sub cx, ax
+
+		; ** Compute ~(0b11 << value)
+		mov ax, 0b11
+		shl ax, cl
+		not ax
+
+		; * Applying the mask to the current PEL data
+		mov bl, [es:bp]
+		and bl, al
+
+		; * Applying the color data for the PEL
+		mov dl, ARG(3)
+		shl dx, cl
+		or al, dl
+		mov [es:bp], dl
+
+		; * restoring back cx
+		mov cx, si
+
+		loop .draw_loop
+	STACK_RELEASE
