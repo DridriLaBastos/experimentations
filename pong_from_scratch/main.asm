@@ -137,37 +137,34 @@ mov ax, 0xB800
 mov es, ax
 
 ; Draw a line horizontally
-; %3 col
-; %2 y
-; %1 x_end
-; %0 x_start
+; %1 x_start
+; %2 x_end
+; %3 y
+; %4 col
 %macro DRAW_HLINE 4
+	push %4
 	push %3
 	push %2
 	push %1
-	push %0
 	call draw_hline
+	;TODO: Can optimized by directly modifying values in the stack
+	pop ax
+	pop ax
+	pop ax
+	pop ax
 %endmacro
 
 DRAW_HLINE 0,SCREEN_WIDTH,0,0b11
-
-;TODO: Can optimized by directly modifying values in the stack
-pop ax
-pop ax
-pop ax
-pop ax
-
 DRAW_HLINE 0,SCREEN_WIDTH,1,0b11
-pop ax
-pop ax
-pop ax
-pop ax
 
-DRAW_VLINE SCREEN_HEIGH/2-5,SCREEN_HEIGH/2+5,3,0b11
+DRAW_HLINE 0,SCREEN_WIDTH,SCREEN_HEIGH-2,0b11
+DRAW_HLINE 0,SCREEN_WIDTH,SCREEN_HEIGH-1,0b11
 
-DRAW_VLINE 2,SCREEN_HEIGH-1,SCREEN_WIDTH/2,0b11
+; DRAW_VLINE SCREEN_HEIGH/2-5,SCREEN_HEIGH/2+5,3,0b11
 
-DRAW_VLINE SCREEN_HEIGH/2-5,SCREEN_HEIGH/2+5,SCREEN_WIDTH-4,0b11
+; DRAW_VLINE 2,SCREEN_HEIGH-1,SCREEN_WIDTH/2,0b11
+
+; DRAW_VLINE SCREEN_HEIGH/2-5,SCREEN_HEIGH/2+5,SCREEN_WIDTH-4,0b11
 
 ; push word 0b11
 ; push word SCREEN_HEIGH-2
@@ -231,7 +228,6 @@ draw_hline:
 	mov ax, SCREEN_WIDTH/4
 	mul bx
 	add si, ax
-	xchg bx, bx
 	; ** Computing (%0)/4)
 	mov ax, ARG(0)	; Retrieving the value of %0
 	mov bx, ax		; %0 saved for next step
