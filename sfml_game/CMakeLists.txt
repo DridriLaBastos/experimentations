@@ -8,6 +8,7 @@ FetchContent_Declare(sfml
 	CMAKE_ARGS -DBUILD_SHARED_LIBS=OFF)
 FetchContent_MakeAvailable(sfml)
 
-add_executable(game main.cpp)
+add_executable(game main.cpp src/game.cpp)
+
 target_link_libraries(game PRIVATE sfml-graphics)
-target_include_directories(game PRIVATE ${sfml_SOURCE_DIR}/include)
+target_include_directories(game PRIVATE ${PROJECT_SOURCE_DIR} ${sfml_SOURCE_DIR}/include)
