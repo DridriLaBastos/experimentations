@@ -1,6 +1,6 @@
 #include "game.hpp"
 
-Game::Game(): mWindow(sf::VideoMode(640,480),"SFML Game"),mPlayer(),
+Game::Game(): mWindow(sf::VideoMode(640,480),"SFML Game"),mPlayer(),mPerformanceOverlay(),
 				mShouldMoveUp(false),mShouldMoveDown(false),mShouldMoveLeft(false),mShouldMoveRight(false)
 {
 	mPlayer.setRadius(40.f);
@@ -8,25 +8,59 @@ Game::Game(): mWindow(sf::VideoMode(640,480),"SFML Game"),mPlayer(),
 	mPlayer.setFillColor(sf::Color::Cyan);
 }
 
-static constexpr float FPS = 60.0;
+static constexpr float FPS = 30.0;
 static const sf::Time TIME_PER_FRAME = sf::milliseconds(1000.0/FPS);
+
+static unsigned int sRenderTick = 0;
+static unsigned int sUpdateTicks = 0;
+static char buffer[256];
+
+#define RESOURCE_PATH(r) (RESOURCE_FOLDER "/" r)
 
 void Game::Run()
 {
 	sf::Clock clock;
 	sf::Time timeSinceLastUpdate = sf::Time::Zero;
+	sf::Time elapsed = sf::Time::Zero;
+	memset(buffer,0,sizeof(buffer));
+
+	mPerformanceOverlay.setPosition(0,0);
+
+	sf::Font f;
+	f.loadFromFile(RESOURCE_PATH("fonts/Sansation.ttf"));
+
+	mPerformanceOverlay.setFont(f);
+	mPerformanceOverlay.setPosition(5,5);
+	mPerformanceOverlay.setCharacterSize(13);
+
+	mWindow.setFramerateLimit(FPS);
+
 	while(mWindow.isOpen())
 	{
-		timeSinceLastUpdate += clock.restart();
+		const sf::Time dt = clock.restart();
+
+		timeSinceLastUpdate += dt;
+		elapsed += dt;
 
 		while (timeSinceLastUpdate >= TIME_PER_FRAME)
 		{
 			ProcessEvent();
 			Update(TIME_PER_FRAME);
 			timeSinceLastUpdate -= TIME_PER_FRAME;
+			sUpdateTicks += 1;
 		}
 		
+		sRenderTick += 1;
 		Render();
+
+		if (elapsed >= sf::seconds(1))
+		{
+			snprintf(buffer,sizeof(buffer), "FPS : %d\nTPS %d\n",sRenderTick,sUpdateTicks);
+			mPerformanceOverlay.setString(buffer);
+			sRenderTick = 0;
+			sUpdateTicks = 0;
+			elapsed -= sf::seconds(1);
+		}
 	}
 }
 
@@ -74,6 +108,7 @@ void Game::Render()
 {
 	mWindow.clear();
 	mWindow.draw(mPlayer);
+	mWindow.draw(mPerformanceOverlay);
 	mWindow.display();
 }
 
