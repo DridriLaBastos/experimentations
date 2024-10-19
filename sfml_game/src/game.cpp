@@ -1,11 +1,14 @@
 #include "game.hpp"
 
-Game::Game(): mWindow(sf::VideoMode(640,480),"SFML Game"),mPlayer(),mPerformanceOverlay(),
+#define RESOURCE_PATH(r) (RESOURCE_FOLDER "/" r)
+
+Game::Game(): mWindow(sf::VideoMode(640,480),"SFML Game"),mPlayer(),mTexture(), mPerformanceOverlay(),
 				mShouldMoveUp(false),mShouldMoveDown(false),mShouldMoveLeft(false),mShouldMoveRight(false)
 {
-	mPlayer.setRadius(40.f);
-	mPlayer.setPosition(100.f,100.f);
-	mPlayer.setFillColor(sf::Color::Cyan);
+	mTexture.loadFromFile(RESOURCE_PATH("textures/Eagle.png"));
+
+	mPlayer.setTexture(mTexture);
+	mPlayer.setPosition(100.0,100.0);
 }
 
 static constexpr float FPS = 30.0;
@@ -14,8 +17,6 @@ static const sf::Time TIME_PER_FRAME = sf::milliseconds(1000.0/FPS);
 static unsigned int sRenderTick = 0;
 static unsigned int sUpdateTicks = 0;
 static char buffer[256];
-
-#define RESOURCE_PATH(r) (RESOURCE_FOLDER "/" r)
 
 void Game::Run()
 {
@@ -90,7 +91,7 @@ void Game::ProcessEvent()
 	}
 }
 
-static constexpr float PLAYER_SPEED = 50.0;
+static constexpr float PLAYER_SPEED = 200.0;
 
 void Game::Update(const sf::Time dt)
 {

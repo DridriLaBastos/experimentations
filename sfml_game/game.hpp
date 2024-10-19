@@ -18,7 +18,9 @@ private:
 
 private:
 	sf::RenderWindow mWindow;
-	sf::CircleShape mPlayer;
+	sf::Sprite mPlayer;
+	sf::Texture mTexture;
+
 	sf::Text mPerformanceOverlay;
 
 	bool mShouldMoveUp;
