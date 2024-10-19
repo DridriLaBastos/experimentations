@@ -11,7 +11,7 @@ public:
 
 private:
 	void ProcessEvent(void);
-	void Update(void);
+	void Update(const sf::Time dt);
 	void Render(void);
 
 	void HandlePlayerInput(sf::Keyboard::Key key,bool isPressed);
