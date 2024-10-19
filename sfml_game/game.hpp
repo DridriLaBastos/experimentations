@@ -3,6 +3,8 @@
 
 #include "SFML/Graphics.hpp"
 
+#include "textures/texture_holder.hpp"
+
 class Game
 {
 public:
@@ -19,7 +21,8 @@ private:
 private:
 	sf::RenderWindow mWindow;
 	sf::Sprite mPlayer;
-	sf::Texture mTexture;
+
+	TextureHolder mTextures;
 
 	sf::Text mPerformanceOverlay;
 

@@ -2,16 +2,16 @@
 
 #define RESOURCE_PATH(r) (RESOURCE_FOLDER "/" r)
 
-Game::Game(): mWindow(sf::VideoMode(640,480),"SFML Game"),mPlayer(),mTexture(), mPerformanceOverlay(),
+Game::Game(): mWindow(sf::VideoMode(640,480),"SFML Game"),mPlayer(),mTextures(), mPerformanceOverlay(),
 				mShouldMoveUp(false),mShouldMoveDown(false),mShouldMoveLeft(false),mShouldMoveRight(false)
 {
-	mTexture.loadFromFile(RESOURCE_PATH("textures/Eagle.png"));
+	mTextures.Load(TextureID::Airplane,RESOURCE_PATH("textures/Eagle.png"));
 
-	mPlayer.setTexture(mTexture);
+	mPlayer.setTexture(mTextures.Get(TextureID::Airplane));
 	mPlayer.setPosition(100.0,100.0);
 }
 
-static constexpr float FPS = 30.0;
+static constexpr float FPS = 60.0;
 static const sf::Time TIME_PER_FRAME = sf::milliseconds(1000.0/FPS);
 
 static unsigned int sRenderTick = 0;
