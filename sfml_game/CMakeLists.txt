@@ -9,8 +9,7 @@ FetchContent_Declare(sfml
 FetchContent_MakeAvailable(sfml)
 
 add_executable(game main.cpp
-					src/game.cpp
-					src/texture_holder.cpp)
+					src/game.cpp)
 
 target_link_libraries(game PRIVATE sfml-graphics)
 target_include_directories(game PRIVATE ${PROJECT_SOURCE_DIR} ${sfml_SOURCE_DIR}/include)

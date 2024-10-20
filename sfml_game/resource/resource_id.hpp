@@ -6,4 +6,9 @@ enum class TextureID
 	Landscape, Airplane, Missile
 };
 
+enum class FontID
+{
+	Sansation
+};
+
 #endif

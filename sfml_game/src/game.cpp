@@ -2,13 +2,17 @@
 
 #define RESOURCE_PATH(r) (RESOURCE_FOLDER "/" r)
 
-Game::Game(): mWindow(sf::VideoMode(640,480),"SFML Game"),mPlayer(),mTextures(), mPerformanceOverlay(),
+Game::Game(): mWindow(sf::VideoMode(640,480),"SFML Game"),mPlayer(),mTextures(),mFonts(),mPerformanceOverlay(),
 				mShouldMoveUp(false),mShouldMoveDown(false),mShouldMoveLeft(false),mShouldMoveRight(false)
 {
 	mTextures.Load(TextureID::Airplane,RESOURCE_PATH("textures/Eagle.png"));
 
 	mPlayer.setTexture(mTextures.Get(TextureID::Airplane));
 	mPlayer.setPosition(100.0,100.0);
+
+	mFonts.Load(FontID::Sansation,RESOURCE_PATH("fonts/Sansation.ttf"));
+
+	mPerformanceOverlay.setFont(mFonts.Get(FontID::Sansation));
 }
 
 static constexpr float FPS = 60.0;
@@ -27,10 +31,6 @@ void Game::Run()
 
 	mPerformanceOverlay.setPosition(0,0);
 
-	sf::Font f;
-	f.loadFromFile(RESOURCE_PATH("fonts/Sansation.ttf"));
-
-	mPerformanceOverlay.setFont(f);
 	mPerformanceOverlay.setPosition(5,5);
 	mPerformanceOverlay.setCharacterSize(13);
 
