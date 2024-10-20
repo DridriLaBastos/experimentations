@@ -3,7 +3,7 @@
 
 enum class TextureID
 {
-	Landscape, Airplane, Missile
+	Eagle, Raptor, Desert
 };
 
 enum class FontID

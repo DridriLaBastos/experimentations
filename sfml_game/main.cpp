@@ -1,3 +1,5 @@
+#include <iostream>
+
 #include <SFML/Audio.hpp>
 #include <SFML/Graphics.hpp>
 
@@ -6,6 +8,15 @@
 int main()
 {
 	Game g;
-	g.Run();
+
+	try
+	{
+		g.Run();
+	}
+	catch(const std::exception& e)
+	{
+		std::cerr << e.what() << '\n';
+	}
+	
 	return EXIT_SUCCESS;
 }

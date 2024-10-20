@@ -3,8 +3,7 @@
 
 #include "SFML/Graphics.hpp"
 
-#include "resource/resource_holder.hpp"
-#include "resource/resource_id.hpp"
+#include "world.hpp"
 
 class Game
 {
@@ -21,10 +20,8 @@ private:
 
 private:
 	sf::RenderWindow mWindow;
-	sf::Sprite mPlayer;
 
-	ResourceHolder<TextureID,sf::Texture> mTextures;
-	ResourceHolder<FontID,sf::Font> mFonts;
+	World mWorld;
 
 	sf::Text mPerformanceOverlay;
 
