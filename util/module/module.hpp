@@ -17,14 +17,27 @@ public:
 	bool ReloadIfNeeded(void);
 
 	template <typename Ret, typename ...Args>
-	bool LoadSymbol(const std::string& symbolName, Ret(*symbolFunction)(Args...))
+	bool LoadSymbol(const std::string& symbolName, Ret(**symbolFunction)(Args...))
 	{
-		*symbolFunction = nullptr;
-		return Platform::LoadSymbol(&mSharedModule,symbolName,(void**)&symbolFunction);
+		*symbolFunction = DoNothing;
+		return Platform::LoadSymbol(&mSharedModule,symbolName,(void**)symbolFunction);
 	}
+
+private:
+	template <typename Ret, typename ...Args>
+	static Ret DoNothing(Args...)
+	{
+
+	}
+
+private:
+	std::error_code CopyAndLoad(void);
 
 	const std::filesystem::path mModulePath;
 	const std::filesystem::path mModuleCopyPath;
+
+private:
+	void DoNothing(void);
 
 private:
 	SharedModuleHandle mSharedModule;
