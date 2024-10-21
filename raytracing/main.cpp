@@ -9,11 +9,9 @@
 
 #include "ppm.hpp"
 #include "color.hpp"
+#include "raytracing.hpp"
 
 #include "util/module/module.hpp"
-
-constexpr size_t IMAGE_WIDTH = 720;
-constexpr size_t IMAGE_HEIGHT = 480;
 
 int main(void)
 {
@@ -33,6 +31,12 @@ int main(void)
 	ppm.write("test.ppm",12);
 #endif
 
+	Raytracing::RenderingInfo renderingInfo;
+
+	RAYTRACING_DRAW_MODULE_FUNC_RET(*HotReloadedRaytracingDrawModuleFuncPtr)(RAYTRACING_DRAW_MODULE_FUN_PARAMETER) = nullptr;
+	Module raytracingDrawModule (RAYTRACING_DRAW_MODULE_FULL_PATH,RAYTRACING_DRAW_MODULE_COPY_FULL_PATH);
+
+	raytracingDrawModule.LoadSymbol(FUNCTION_NAME(RAYTRACING_DRAW_MODULE_SYMBOL_NAME),&HotReloadedRaytracingDrawModuleFuncPtr);
 	sf::RenderWindow window (sf::VideoMode(640,480),"Raytracing");
 
 	while (window.isOpen())
@@ -52,7 +56,12 @@ int main(void)
 			}
 		}
 
+		if(raytracingDrawModule.ReloadIfNeeded())
+		{
+			raytracingDrawModule.LoadSymbol(FUNCTION_NAME(RAYTRACING_DRAW_MODULE_SYMBOL_NAME),&HotReloadedRaytracingDrawModuleFuncPtr);
+		}
 		window.clear();
+		HotReloadedRaytracingDrawModuleFuncPtr(&renderingInfo);
 		window.display();
 	}
 
