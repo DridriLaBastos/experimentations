@@ -13,6 +13,8 @@ FetchContent_MakeAvailable(sfml)
 
 add_compile_options(-Wall -Wextra)
 
+add_subdirectory(util)
+
 add_subdirectory(nn)
 add_subdirectory(opencv)
 add_subdirectory(hardwaresim)
