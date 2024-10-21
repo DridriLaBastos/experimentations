@@ -12,6 +12,7 @@ FetchContent_Declare(sfml
 FetchContent_MakeAvailable(sfml)
 
 add_compile_options(-Wall -Wextra)
+include_directories(${CMAKE_SOURCE_DIR})
 
 add_subdirectory(util)
 
