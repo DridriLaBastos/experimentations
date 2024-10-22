@@ -13,6 +13,10 @@
 
 #include "util/module/module.hpp"
 
+static constexpr unsigned int PIXEL_HEIGHT = 200;
+static constexpr unsigned int PIXEL_WIDTH  = 200;
+static Color buffer [PIXEL_HEIGHT * PIXEL_WIDTH];
+
 int main(void)
 {
 #if 0
@@ -33,12 +37,14 @@ int main(void)
 
 	Raytracing::RenderingInfo renderingInfo;
 
-	RAYTRACING_DRAW_MODULE_FUNC_RET(*HotReloadedRaytracingDrawModuleFuncPtr)(RAYTRACING_DRAW_MODULE_FUN_PARAMETER) = nullptr;
+	RAYTRACING_DRAW_MODULE_FUNC_RET(*HotReloadedRaytracingDrawModuleFuncPtr)(RAYTRACING_DRAW_MODULE_FUNC_PARAMETERS) = nullptr;
 	Module raytracingDrawModule (RAYTRACING_DRAW_MODULE_FULL_PATH,RAYTRACING_DRAW_MODULE_COPY_FULL_PATH);
 
 	raytracingDrawModule.LoadSymbol(FUNCTION_NAME(RAYTRACING_DRAW_MODULE_SYMBOL_NAME),&HotReloadedRaytracingDrawModuleFuncPtr);
-	sf::RenderWindow window (sf::VideoMode(640,480),"Raytracing");
 
+	sf::RenderWindow window (sf::VideoMode(640,480),"Raytracing");
+	window.setFramerateLimit(30);
+	
 	while (window.isOpen())
 	{
 		sf::Event event;
