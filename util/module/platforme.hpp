@@ -5,6 +5,10 @@
 #include <filesystem>
 
 #ifdef WIN32
+	#include <Windows.h>
+	using SharedModuleHandle = HMODULE;
+	using SharedModuleError  = DWORD;
+	using PlatformErrorCode  = DWORD;
 #else
 	using SharedModuleHandle = void*;
 	using SharedModuleError  = int;
