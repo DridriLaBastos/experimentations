@@ -36,6 +36,9 @@ int main(void)
 #endif
 
 	Raytracing::RenderingInfo renderingInfo;
+	renderingInfo.buffer = buffer;
+	renderingInfo.height = PIXEL_HEIGHT;
+	renderingInfo.width  = PIXEL_WIDTH;
 
 	RAYTRACING_DRAW_MODULE_FUNC_RET(*HotReloadedRaytracingDrawModuleFuncPtr)(RAYTRACING_DRAW_MODULE_FUNC_PARAMETERS) = nullptr;
 	Module raytracingDrawModule (RAYTRACING_DRAW_MODULE_FULL_PATH,RAYTRACING_DRAW_MODULE_COPY_FULL_PATH);
@@ -44,7 +47,13 @@ int main(void)
 
 	sf::RenderWindow window (sf::VideoMode(640,480),"Raytracing");
 	window.setFramerateLimit(30);
-	
+
+	sf::Texture texture;
+	texture.create(PIXEL_WIDTH,PIXEL_HEIGHT);
+
+	sf::Sprite sprite;
+	sprite.setTexture(texture);
+
 	while (window.isOpen())
 	{
 		sf::Event event;
@@ -68,6 +77,8 @@ int main(void)
 		}
 		window.clear();
 		HotReloadedRaytracingDrawModuleFuncPtr(&renderingInfo);
+		texture.update((sf::Uint8*)renderingInfo.buffer);
+		window.draw(sprite);
 		window.display();
 	}
 

@@ -2,10 +2,9 @@
 
 RAYTRACING_DRAW_MODULE_FUNC_DEFINITION
 {
-
 	for (size_t i = 0; i < (renderingInfo->height)*(renderingInfo->width); i += 1)
 	{
-		renderingInfo->buffer[i] = Colors::MAGENTA;
+		renderingInfo->buffer[i] = Colors::YELLOW;
 	}
 }
 
