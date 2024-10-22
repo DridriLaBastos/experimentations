@@ -20,7 +20,15 @@ public:
 	bool LoadSymbol(const std::string& symbolName, Ret(**symbolFunction)(Args...))
 	{
 		*symbolFunction = DoNothing;
-		return Platform::LoadSymbol(&mSharedModule,symbolName,(void**)symbolFunction);
+		const bool status = Platform::LoadSymbol(&mSharedModule,symbolName,(void**)symbolFunction);
+
+		if (!status)
+		{
+			fprintf(stderr, "Loading symbol '%s' failed with error %d : '%s'",
+				symbolName.c_str(),Platform::GetSharedModuleErrorCode(),Platform::GetSharedModuleErrorDescription(Platform::GetSharedModuleErrorCode()).c_str());
+		}
+
+		return status;
 	}
 
 private:
