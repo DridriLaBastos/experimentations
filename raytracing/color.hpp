@@ -5,7 +5,7 @@
 #ifndef EXPERIMENTATIONS_COLOR_HPP
 #define EXPERIMENTATIONS_COLOR_HPP
 
-#include "simdvec.hpp"
+#include <cstdint>
 
 union Color
 {

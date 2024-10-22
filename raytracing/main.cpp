@@ -5,10 +5,10 @@
 #include <cstdio>
 #include <cstdlib>
 
+#include <chrono>
+
 #include "SFML/Graphics.hpp"
 
-#include "ppm.hpp"
-#include "color.hpp"
 #include "raytracing.hpp"
 
 #include "util/module/module.hpp"
@@ -16,6 +16,8 @@
 static constexpr unsigned int PIXEL_HEIGHT = 200;
 static constexpr unsigned int PIXEL_WIDTH  = 200;
 static Color buffer [PIXEL_HEIGHT * PIXEL_WIDTH];
+
+using Clock = std::chrono::high_resolution_clock;
 
 int main(void)
 {
@@ -54,8 +56,20 @@ int main(void)
 	sf::Sprite sprite;
 	sprite.setTexture(texture);
 
+	sf::Font font;
+	font.loadFromFile(ASSET_PATH "/fonts/Sansation.ttf");
+	sf::Text text;
+	text.setFont(font);
+
+	sf::Clock clock;
+	sf::Time accumulatedRenderTime = sf::Time::Zero;
+	std::chrono::nanoseconds averageRtTime;
+	unsigned int fps = 0;
+
 	while (window.isOpen())
 	{
+		accumulatedRenderTime += clock.restart();
+		fps += 1;
 		sf::Event event;
 		
 		while (window.pollEvent(event))
@@ -76,10 +90,25 @@ int main(void)
 			raytracingDrawModule.LoadSymbol(FUNCTION_NAME(RAYTRACING_DRAW_MODULE_SYMBOL_NAME),&HotReloadedRaytracingDrawModuleFuncPtr);
 		}
 		window.clear();
+		const std::chrono::time_point begin = Clock::now();
 		HotReloadedRaytracingDrawModuleFuncPtr(&renderingInfo);
+		averageRtTime += Clock::now() - begin;
 		texture.update((sf::Uint8*)renderingInfo.buffer);
 		window.draw(sprite);
+		window.draw(text);
 		window.display();
+
+		if (accumulatedRenderTime >= sf::seconds(1))
+		{
+			char buffer[256];
+
+			snprintf(buffer,sizeof(buffer),"FPS %d (%3dms)\nRT %3d ms",
+				fps,accumulatedRenderTime.asMilliseconds() / fps,std::chrono::duration_cast<std::chrono::milliseconds>(averageRtTime).count() / fps);
+			fps = 0;
+			accumulatedRenderTime = sf::Time::Zero;
+			averageRtTime = std::chrono::nanoseconds(0);
+			text.setString(buffer);
+		}
 	}
 
 	return EXIT_SUCCESS;
