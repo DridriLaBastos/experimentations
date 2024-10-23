@@ -2,6 +2,7 @@
 #define TEXTURE_HOLDER_HPP
 
 #include <map>
+#include <string>
 #include <memory>
 
 #include <cassert>
