@@ -35,7 +35,7 @@ private:
 	template <typename Ret, typename ...Args>
 	static Ret DoNothing(Args...)
 	{
-
+		return Ret();
 	}
 
 private:
