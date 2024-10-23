@@ -11,13 +11,16 @@ FetchContent_Declare(sfml
 	CMAKE_ARGS -DBUILD_SHARED_LIBS=OFF)
 FetchContent_MakeAvailable(sfml)
 
-add_compile_options(-Wall -Wextra)
+if (!${MSVC})
+	add_compile_options(-Wall -Wextra)
+endif()
 include_directories(${CMAKE_SOURCE_DIR})
 
 add_subdirectory(util)
 
 add_subdirectory(nn)
 add_subdirectory(opencv)
+add_subdirectory(pong_from_scratch)
 add_subdirectory(hardwaresim)
 add_subdirectory(raytracing)
 add_subdirectory(sfml_game)
