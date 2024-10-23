@@ -8,13 +8,13 @@
 #endif
 
 #ifdef WIN32
-#warning "DLL_INIT not defined for WIN32 platform"
+#define DLL_INIT
 #else
 #define DLL_INIT __attribute__((constructor))
 #endif
 
 #ifdef WIN32
-#warning "DLL_CLEAR not defined for WIN32 platform"
+#define DLL_CLEAR
 #else
 #define DLL_CLEAR __attribute__((destructor))
 #endif
