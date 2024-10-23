@@ -1,4 +1,3 @@
-#include <dlfcn.h>
 #include <iostream>
 
 #include "module.hpp"
