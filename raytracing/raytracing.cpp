@@ -29,7 +29,7 @@ DLL_CLEAR void Deinit(void)
 	puts("Unloading :(");
 }
 
-//This cannot be done in a cross-platform way
+//This cannot be done in an cross platform way
 #ifdef WIN32
 #include <Windows.h>
 #include <Process.h>
