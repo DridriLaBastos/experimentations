@@ -1,5 +1,4 @@
 #include <cstdio>
-#include <unistd.h>
 
 #include "raytracing.hpp"
 
@@ -20,7 +19,7 @@ RAYTRACING_DRAW_MODULE_FUNC_DEFINITION
 }
 
 
-DLL_INIT void Inti(void)
+DLL_INIT void Init(void)
 {
 	puts("Loading :)");
 }
@@ -29,3 +28,28 @@ DLL_CLEAR void Deinit(void)
 {
 	puts("Unloading :(");
 }
+
+//This cannot be done in a cross-platform way
+#ifdef WIN32
+#include <Windows.h>
+#include <Process.h>
+
+BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason,LPVOID lpvReserved)
+{
+	switch (fdwReason)
+	{
+		case DLL_PROCESS_ATTACH:
+			Init();
+			break;
+		
+		case DLL_PROCESS_DETACH:
+			Deinit();
+			break;
+		
+		default:
+			break;
+	}
+
+	return TRUE;
+}
+#endif
