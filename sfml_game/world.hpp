@@ -1,6 +1,8 @@
 #ifndef WORLD_HPP
 #define WORLD_HPP
 
+#include <array>
+
 #include "resource/types.hpp"
 #include "entity/aircraft.hpp"
 #include "scene/scene_node.hpp"
