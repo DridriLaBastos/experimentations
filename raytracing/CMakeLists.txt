@@ -14,3 +14,8 @@ target_compile_definitions(rt PRIVATE
 	RAYTRACING_DRAW_MODULE_FULL_PATH="$<TARGET_FILE:raytracing_draw_module>"
 	RAYTRACING_DRAW_MODULE_COPY_FULL_PATH="${RAYTRACING_DRAW_MODULE_COPY_FULL_PATH}"
 	ASSET_PATH="${PROJECT_SOURCE_DIR}/assets")
+
+if (${WIN32})
+add_custom_command(TARGET rt POST_BUILD
+	COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:sfml-graphics> $<TARGET_FILE:sfml-system> $<TARGET_FILE:sfml-window> $<TARGET_FILE_DIR:rt>)
+endif()
