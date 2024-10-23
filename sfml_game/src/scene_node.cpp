@@ -11,7 +11,7 @@ SceneNode::SceneNode(void): mChilds(), mParent(nullptr)
 void SceneNode::Add (std::unique_ptr<SceneNode>&& child)
 {
 	child->mParent = this;
-	mChilds.push_back(std::forward<std::unique_ptr<SceneNode>&&>(child));
+	mChilds.push_back(std::move(child));
 }
 
 std::unique_ptr<SceneNode> SceneNode::Detach (const SceneNode& node)
@@ -41,32 +41,29 @@ void SceneNode::draw(sf::RenderTarget& target,sf::RenderStates states) const
 }
 
 void SceneNode::DrawCurrent(sf::RenderTarget& target,sf::RenderStates states) const
-{
-
-}
+{}
 
 void SceneNode::Update(const sf::Time dt)
 {
 	UpdateCurrent(dt);
 
-	std::for_each(mChilds.begin(),mChilds.end(),[&](const std::unique_ptr<SceneNode>& ptr)
+	for (auto& child: mChilds)
 	{
-		ptr->Update(dt);
-	});
+		child->Update(dt);
+	}
 }
 
 void SceneNode::UpdateCurrent(const sf::Time dt)
-{
-
-}
+{}
 
 sf::Transform SceneNode::GetWorldTransform(void) const
 {
 	sf::Transform t = sf::Transform::Identity;
 
-	for(const SceneNode* s = this; this->mParent != nullptr; s = this->mParent)
+	for(const SceneNode* node = this; node != nullptr; node = node->mParent)
 	{
-		t *= s->getTransform();
+		// Matrix multiply is not associative -> not using *=
+		t = node->getTransform() * t;
 	}
 
 	return t;

@@ -6,7 +6,9 @@
 class Entity: public SceneNode
 {
 public:
-	void UpdateCurrent(const sf::Time dt);
+	virtual void UpdateCurrent(const sf::Time dt);
+
+	void SetVelocity (const float dx, const float dy);
 
 public:
 	sf::Vector2f mVelocity;
