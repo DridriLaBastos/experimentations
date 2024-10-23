@@ -34,7 +34,7 @@ bool Platform::UnloadSharedModule(SharedModuleHandle* sharedModuleHandle)
 	return FreeLibrary(*sharedModuleHandle);
 }
 
-bool LoadSymbol(const SharedModuleHandle* sharedModuleHandle, const std::string& symbol, void** sym)
+bool Platform::LoadSymbol(const SharedModuleHandle* sharedModuleHandle, const std::string& symbol, void** sym)
 {
 	FARPROC proc = GetProcAddress(*sharedModuleHandle,symbol.c_str());
 	*sym = (void*)proc;
