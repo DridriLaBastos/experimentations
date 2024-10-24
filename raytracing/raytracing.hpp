@@ -1,29 +1,16 @@
 #ifndef RAYTRACING_HPP
 #define RAYTRACING_HPP
 
-#include <cstddef>
-#include "color.hpp"
 #include "util/module/platform_util.hpp"
-
-namespace Raytracing
-{
-	struct RenderingInfo
-	{
-		size_t width;
-		size_t height;
-
-		Color* buffer;
-	};
-}
 
 #define QUOTE(macro) #macro
 #define FUNCTION_NAME(name) QUOTE(name)
 
-#define RAYTRACING_DRAW_MODULE_FUNC_RET void
-#define RAYTRACING_DRAW_MODULE_FUNC_PARAMETERS const Raytracing::RenderingInfo* renderingInfo
-#define RAYTRACING_DRAW_MODULE_SYMBOL_NAME Raytracing_Compute
+#define RAYTRACING_DRAW_MODULE_FUNC_RET bool
+#define RAYTRACING_DRAW_MODULE_FUNC_PARAMETERS void
+#define RAYTRACING_DRAW_MODULE_SYMBOL_NAME Raytracing_Render
 
-#define RAYTRACING_DRAW_MODULE_FUNC_DEFINITION RAYTRACING_DRAW_MODULE_FUNC_RET Raytracing_Compute (RAYTRACING_DRAW_MODULE_FUNC_PARAMETERS)
+#define RAYTRACING_DRAW_MODULE_FUNC_DEFINITION RAYTRACING_DRAW_MODULE_FUNC_RET RAYTRACING_DRAW_MODULE_SYMBOL_NAME(RAYTRACING_DRAW_MODULE_FUNC_PARAMETERS)
 
 extern "C" DLL_EXPORT RAYTRACING_DRAW_MODULE_FUNC_DEFINITION;
 
