@@ -87,6 +87,11 @@ RAYTRACING_DRAW_MODULE_FUNC_DEFINITION
 DLL_INIT void Init(void)
 {
 	puts("Init");
+	if (renderingInfo)
+	{
+		delete renderingInfo;
+	}
+	
 	renderingInfo = new RenderingInfo();
 
 	renderingInfo->window = new sf::RenderWindow(sf::VideoMode(640,480),"Raytracing");
