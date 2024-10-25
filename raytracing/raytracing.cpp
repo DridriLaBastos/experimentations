@@ -1,5 +1,6 @@
 #include <cstdio>
 
+#include "color.hpp"
 #include "raytracing.hpp"
 
 #include "SFML/Graphics.hpp"
@@ -12,6 +13,7 @@ struct RenderingInfo
 	sf::RenderWindow* window;
 	sf::Texture* texture;
 	sf::Sprite* sprite;
+	Color* buffer;
 	sf::Font font;
 	sf::Text text;
 
@@ -24,6 +26,7 @@ struct RenderingInfo
 		delete window;
 		delete texture;
 		delete sprite;
+		delete[] buffer;
 	}
 };
 
@@ -31,7 +34,18 @@ static RenderingInfo* renderingInfo = nullptr;
 
 static void Raytracing_Compute(void)
 {
+	for (size_t y = 0; y < PIXEL_HEIGHT; y += 1)
+	{
+		for (size_t x = 0; x < PIXEL_WIDTH; x += 1)
+		{
+			const size_t currentPixelIndex = y * PIXEL_WIDTH + x;
+			const float r = x / (float)(PIXEL_WIDTH - 1);
+			const float g = y / (float)(PIXEL_HEIGHT - 1);
+			const float b = 0.0f;
 
+			renderingInfo->buffer[currentPixelIndex] = Color(r,g,b);
+		}
+	}
 }
 
 RAYTRACING_DRAW_MODULE_FUNC_DEFINITION
@@ -66,6 +80,8 @@ RAYTRACING_DRAW_MODULE_FUNC_DEFINITION
 
 	renderingInfo->window->clear();
 	Raytracing_Compute();
+	renderingInfo->texture->update((sf::Uint8*)renderingInfo->buffer);
+	renderingInfo->window->draw(*renderingInfo->sprite);
 	renderingInfo->window->draw(renderingInfo->text);
 	renderingInfo->window->display();
 
@@ -91,8 +107,10 @@ DLL_INIT void Init(void)
 	{
 		delete renderingInfo;
 	}
-	
+
 	renderingInfo = new RenderingInfo();
+
+	renderingInfo->buffer = new Color[PIXEL_HEIGHT*PIXEL_WIDTH];
 
 	renderingInfo->window = new sf::RenderWindow(sf::VideoMode(640,480),"Raytracing");
 	renderingInfo->window->setFramerateLimit(30);
