@@ -49,12 +49,12 @@ static RenderingInfo* renderingInfo = nullptr;
 static float HitSphere(const Point3f& center, const float radius, const Ray& r)
 {
 	const Vec3f oc = center - r.Origin();
-	const float a = glm::dot(r.Direction(),r.Direction());
-	const float b = -2.0 * glm::dot(r.Direction(),oc);
-	const float c = glm::dot(oc,oc) - radius*radius;
-	const float discriminant = b*b - 4*a*c;
+	const float a = glm::length2(r.Direction());
+	const float h = glm::dot(r.Direction(),oc);
+	const float c = glm::length2(oc) - radius*radius;
+	const float discriminant = h*h-a*c;
 
-	return discriminant < 0 ? -1.f : ((-b - sqrtf(discriminant))/(2*a));
+	return discriminant < 0 ? -1.f : ((h - sqrtf(discriminant))/a);
 }
 
 static Color3f RayColor (const Ray& r)

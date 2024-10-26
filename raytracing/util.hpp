@@ -3,6 +3,9 @@
 
 #include "glm/glm.hpp"
 
+#define GLM_ENABLE_EXPERIMENTAL
+#include "glm/gtx/norm.hpp"
+
 using Vec3f   = glm::vec3;
 using Point3f = glm::vec3;
 using Color3f = glm::vec3;
