@@ -1,12 +1,22 @@
 #include <cstdio>
 
+#include "ray.hpp"
 #include "color.hpp"
+#include "vec3f.hpp"
 #include "raytracing.hpp"
 
 #include "SFML/Graphics.hpp"
 
-static constexpr unsigned int PIXEL_WIDTH = 200;
-static constexpr unsigned int PIXEL_HEIGHT = 200;
+static constexpr float ASPECT_RATIO = 16.f / 9.f;
+static constexpr unsigned int PIXEL_WIDTH = 400;
+static constexpr unsigned int PIXEL_HEIGHT = PIXEL_WIDTH / ASPECT_RATIO;
+
+static constexpr float VIEWPORT_WIDTH = 2.0;
+static constexpr float VIEWPORT_HEIGHT = VIEWPORT_WIDTH / ASPECT_RATIO;
+static constexpr float PIXEL_DX = VIEWPORT_WIDTH / PIXEL_WIDTH;
+static constexpr float PIXEL_DY = VIEWPORT_HEIGHT / PIXEL_HEIGHT;
+
+static constexpr float FOCAL_LENGTH = 1.0;
 
 struct RenderingInfo
 {
@@ -21,6 +31,11 @@ struct RenderingInfo
 	sf::Time elapsed = sf::Time::Zero;
 	sf::Clock clock;
 
+	Point3f cameraCenter {.0f,.0f,.0f};
+	Point3f viewportCenter {.0f,.0f, FOCAL_LENGTH };
+	Point3f viewportUpperLeft = viewportCenter + Point3f{ VIEWPORT_HEIGHT/2.0,-VIEWPORT_WIDTH/2.0,0.0 };
+	Point3f pixel00Loc = viewportUpperLeft + Point3f{ PIXEL_DX/2.0,-PIXEL_DY/2.0,0 };
+
 	void Free(void)
 	{
 		delete window;
@@ -32,18 +47,23 @@ struct RenderingInfo
 
 static RenderingInfo* renderingInfo = nullptr;
 
+static Color RayColor (const Ray& r)
+{
+	return Colors::MAGENTA;
+}
+
 static void Raytracing_Compute(void)
 {
 	for (size_t y = 0; y < PIXEL_HEIGHT; y += 1)
 	{
 		for (size_t x = 0; x < PIXEL_WIDTH; x += 1)
 		{
-			const size_t currentPixelIndex = y * PIXEL_WIDTH + x;
-			const float r = x / (float)(PIXEL_WIDTH - 1);
-			const float g = y / (float)(PIXEL_HEIGHT - 1);
-			const float b = 0.0f;
+			const Point3f currentPixel = renderingInfo->pixel00Loc + Point3f{x*PIXEL_DX,-y*PIXEL_DY,0};
+			const Ray r (renderingInfo->cameraCenter,currentPixel-renderingInfo->cameraCenter);
+			const Color c = RayColor(r);
 
-			renderingInfo->buffer[currentPixelIndex] = Color(r,g,b);
+			const size_t currentPixelIndex = y * PIXEL_WIDTH + x;
+			renderingInfo->buffer[currentPixelIndex] = c;
 		}
 	}
 }
