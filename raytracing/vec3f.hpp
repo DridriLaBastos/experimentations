@@ -24,6 +24,7 @@ union Vec3f
 	Vec3f& operator-= (const Vec3f& v);
 
 	static Vec3f Normalize(const Vec3f& v);
+	static float Dot(const Vec3f& v1, const Vec3f& v2);
 };
 
 using Point3f = Vec3f;

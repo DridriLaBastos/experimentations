@@ -14,6 +14,10 @@ Vec3f Vec3f::Normalize(const Vec3f& v)
 {
 	return v / v.Length();
 }
+float Vec3f::Dot(const Vec3f& v1, const Vec3f& v2)
+{
+	return v1.x*v2.x + v1.y*v2.y + v1.z*v2.z;
+}
 
 Vec3f& Vec3f::operator*= (const float _x)
 {

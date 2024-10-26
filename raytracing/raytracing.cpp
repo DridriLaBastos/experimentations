@@ -11,8 +11,8 @@ static constexpr float ASPECT_RATIO = 16.f / 9.f;
 static constexpr unsigned int PIXEL_WIDTH = 400;
 static constexpr unsigned int PIXEL_HEIGHT = PIXEL_WIDTH / ASPECT_RATIO;
 
-static constexpr float VIEWPORT_WIDTH = 2.0;
-static constexpr float VIEWPORT_HEIGHT = 1.0;//VIEWPORT_WIDTH / ASPECT_RATIO;
+static constexpr float VIEWPORT_WIDTH = 4.0;
+static constexpr float VIEWPORT_HEIGHT = VIEWPORT_WIDTH / ASPECT_RATIO;
 static constexpr float PIXEL_DX = VIEWPORT_WIDTH / PIXEL_WIDTH;
 static constexpr float PIXEL_DY = VIEWPORT_HEIGHT / PIXEL_HEIGHT;
 
@@ -32,9 +32,9 @@ struct RenderingInfo
 	sf::Clock clock;
 
 	Point3f cameraCenter {.0f,.0f,.0f};
-	Point3f viewportCenter {.0f,.0f, FOCAL_LENGTH };
+	Point3f viewportCenter {.0f,.0f, -FOCAL_LENGTH };
 	Point3f viewportUpperLeft = viewportCenter + Point3f(-VIEWPORT_WIDTH/2.f,VIEWPORT_HEIGHT/2.f);
-	Point3f pixel00Loc = viewportUpperLeft;// + Point3f{ PIXEL_DX/2.0,-PIXEL_DY/2.0,0 };
+	Point3f pixel00Loc = viewportUpperLeft + Point3f{ PIXEL_DX/2.0,-PIXEL_DY/2.0,0 };
 
 	void Free(void)
 	{
@@ -47,8 +47,22 @@ struct RenderingInfo
 
 static RenderingInfo* renderingInfo = nullptr;
 
+static bool HitSphere(const Point3f& center, const float radius, const Ray& r)
+{
+	const Vec3f oc = center - r.Origin();
+	const float a = Vec3f::Dot(r.Direction(),r.Direction());
+	const float b = -2.0 * Vec3f::Dot(r.Direction(),oc);
+	const float c = Vec3f::Dot(oc,oc) - radius*radius;
+	const float discriminant = b*b - 4*a*c;
+	return discriminant >= 0;
+}
+
 static Color3f RayColor (const Ray& r)
 {
+	if (HitSphere(Point3f(0,0,-1),0.5,r))
+	{
+		return Colors::RED;
+	}
 	const Vec3f unitDirection = Vec3f::Normalize(r.Direction());
 	const float a = .5f*(unitDirection.y + 1.0);
 	// printf("%.3f\n",a);
