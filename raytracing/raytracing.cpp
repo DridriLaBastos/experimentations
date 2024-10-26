@@ -12,7 +12,7 @@ static constexpr unsigned int PIXEL_WIDTH = 400;
 static constexpr unsigned int PIXEL_HEIGHT = PIXEL_WIDTH / ASPECT_RATIO;
 
 static constexpr float VIEWPORT_WIDTH = 2.0;
-static constexpr float VIEWPORT_HEIGHT = VIEWPORT_WIDTH / ASPECT_RATIO;
+static constexpr float VIEWPORT_HEIGHT = 1.0;//VIEWPORT_WIDTH / ASPECT_RATIO;
 static constexpr float PIXEL_DX = VIEWPORT_WIDTH / PIXEL_WIDTH;
 static constexpr float PIXEL_DY = VIEWPORT_HEIGHT / PIXEL_HEIGHT;
 
@@ -23,7 +23,7 @@ struct RenderingInfo
 	sf::RenderWindow* window;
 	sf::Texture* texture;
 	sf::Sprite* sprite;
-	Color* buffer;
+	RenderColor* buffer;
 	sf::Font font;
 	sf::Text text;
 
@@ -33,8 +33,8 @@ struct RenderingInfo
 
 	Point3f cameraCenter {.0f,.0f,.0f};
 	Point3f viewportCenter {.0f,.0f, FOCAL_LENGTH };
-	Point3f viewportUpperLeft = viewportCenter + Point3f{ VIEWPORT_HEIGHT/2.0,-VIEWPORT_WIDTH/2.0,0.0 };
-	Point3f pixel00Loc = viewportUpperLeft + Point3f{ PIXEL_DX/2.0,-PIXEL_DY/2.0,0 };
+	Point3f viewportUpperLeft = viewportCenter + Point3f(-VIEWPORT_WIDTH/2.f,VIEWPORT_HEIGHT/2.f);
+	Point3f pixel00Loc = viewportUpperLeft;// + Point3f{ PIXEL_DX/2.0,-PIXEL_DY/2.0,0 };
 
 	void Free(void)
 	{
@@ -47,9 +47,12 @@ struct RenderingInfo
 
 static RenderingInfo* renderingInfo = nullptr;
 
-static Color RayColor (const Ray& r)
+static Color3f RayColor (const Ray& r)
 {
-	return Colors::MAGENTA;
+	const Vec3f unitDirection = Vec3f::Normalize(r.Direction());
+	const float a = .5f*(unitDirection.y + 1.0);
+	// printf("%.3f\n",a);
+	return (1.0-a)*Color3f(1.0, 1.0, 1.0) + a*Color3f(0.5, 0.7, 1.0);
 }
 
 static void Raytracing_Compute(void)
@@ -58,12 +61,17 @@ static void Raytracing_Compute(void)
 	{
 		for (size_t x = 0; x < PIXEL_WIDTH; x += 1)
 		{
-			const Point3f currentPixel = renderingInfo->pixel00Loc + Point3f{x*PIXEL_DX,-y*PIXEL_DY,0};
+			const Point3f currentPixel = renderingInfo->pixel00Loc + Vec3f{x*PIXEL_DX,-(float)y*PIXEL_DY,0};
 			const Ray r (renderingInfo->cameraCenter,currentPixel-renderingInfo->cameraCenter);
-			const Color c = RayColor(r);
+			const Color3f c = RayColor(r);
+			// printf("%.3f   %.3f   %.3f\n",r.Direction().x,r.Direction().y,r.Direction().z);
 
 			const size_t currentPixelIndex = y * PIXEL_WIDTH + x;
-			renderingInfo->buffer[currentPixelIndex] = c;
+
+			renderingInfo->buffer[currentPixelIndex].red = c.r*255;
+			renderingInfo->buffer[currentPixelIndex].green = c.g*255;
+			renderingInfo->buffer[currentPixelIndex].blue = c.b*255;
+			renderingInfo->buffer[currentPixelIndex].alpha = 255;
 		}
 	}
 }
@@ -130,7 +138,7 @@ DLL_INIT void Init(void)
 
 	renderingInfo = new RenderingInfo();
 
-	renderingInfo->buffer = new Color[PIXEL_HEIGHT*PIXEL_WIDTH];
+	renderingInfo->buffer = new RenderColor[PIXEL_HEIGHT*PIXEL_WIDTH];
 
 	renderingInfo->window = new sf::RenderWindow(sf::VideoMode(640,480),"Raytracing");
 	renderingInfo->window->setFramerateLimit(30);
