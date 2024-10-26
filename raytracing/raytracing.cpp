@@ -46,21 +46,25 @@ struct RenderingInfo
 
 static RenderingInfo* renderingInfo = nullptr;
 
-static bool HitSphere(const Point3f& center, const float radius, const Ray& r)
+static float HitSphere(const Point3f& center, const float radius, const Ray& r)
 {
 	const Vec3f oc = center - r.Origin();
 	const float a = glm::dot(r.Direction(),r.Direction());
 	const float b = -2.0 * glm::dot(r.Direction(),oc);
 	const float c = glm::dot(oc,oc) - radius*radius;
 	const float discriminant = b*b - 4*a*c;
-	return discriminant >= 0;
+
+	return discriminant < 0 ? -1.f : ((-b - sqrtf(discriminant))/(2*a));
 }
 
 static Color3f RayColor (const Ray& r)
 {
-	if (HitSphere(Point3f(0,0,-1),0.5,r))
+	const float t = HitSphere(Point3f(0,0,-1),0.5,r);
+	
+	if (t > 0)
 	{
-		return Colors::RED;
+		const Vec3f n = glm::normalize(r[t] - Vec3f(0,0,-1));
+		return .5f*Color3f(n.x+1.f,n.y+1.f,n.z+1.f);
 	}
 	const Vec3f unitDirection = glm::normalize(r.Direction());
 	const float a = .5f*(unitDirection.y + 1.0);
@@ -90,6 +94,13 @@ static void Raytracing_Compute(void)
 
 RAYTRACING_DRAW_MODULE_FUNC_DEFINITION
 {
+	// for (size_t y = 0; y < renderingInfo->height; y += 1)
+	// {
+	// 	for (size_t x = 0; x < renderingInfo->width; x += 1)
+	// 	{
+	// 		const float r = x / ((float)renderingInfo->width - 1);
+	// 		const float g = y / ((float)renderingInfo->height - 1);
+	// 		const float b = 0;
 	// for (size_t y = 0; y < renderingInfo->height; y += 1)
 	// {
 	// 	for (size_t x = 0; x < renderingInfo->width; x += 1)
