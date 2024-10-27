@@ -1,7 +1,7 @@
 #include "graphics/ray.hpp"
 #include "graphics/camera.hpp"
 
-Camera::Camera(const Point3f& center, const float focalLength): mCenter(center), mFocalLength(focalLength)
+Camera::Camera(const Point3f& center, const float focalLength): mCenter(center), mFocalLength(focalLength), mSamplePerPixel(4)
 {
 	WithAspectRatio(16.0/9.0,300,4.0);
 }
@@ -29,6 +29,12 @@ void Camera::ComputeInternal(const unsigned int pixelWidth, const unsigned int p
 Camera& Camera::WithAspectRatio(const float widthOverHeightRatio, const float pixelWidth, const float viewPortWidth)
 {
 	ComputeInternal(pixelWidth,pixelWidth/widthOverHeightRatio,viewPortWidth,viewPortWidth/widthOverHeightRatio);
+	return *this;
+}
+
+Camera& Camera::WithSamplePerPixel(const unsigned int sample)
+{
+	mSamplePerPixel = sample;
 	return *this;
 }
 
