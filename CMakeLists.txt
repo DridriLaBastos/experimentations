@@ -3,6 +3,7 @@ project(experimentations)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED TRUE)
+set(CMAKE_INTERPROCEDURAL_OPTIMIZATION_RELEASE ON)
 
 include(FetchContent)
 FetchContent_Declare(sfml
