@@ -1,6 +1,8 @@
 #ifndef UTIL_HPP
 #define UTIL_HPP
 
+#include <random>
+
 #include "glm/glm.hpp"
 
 #define GLM_ENABLE_EXPERIMENTAL
@@ -21,6 +23,12 @@ namespace Colors
 	const Color3f MAGENTA = RED + BLUE;
 	const Color3f CYAN = GREEN + BLUE;
 	const Color3f YELLOW = RED + GREEN;
+}
+
+inline float Random(const float min = 0.0, const float max = 1.0) {
+    static std::uniform_real_distribution<float> distribution(min, max);
+    static std::mt19937 generator;
+    return distribution(generator);
 }
 
 #endif
