@@ -17,7 +17,7 @@ static constexpr float VIEWPORT_HEIGHT = VIEWPORT_WIDTH / ASPECT_RATIO;
 static constexpr float PIXEL_DX = VIEWPORT_WIDTH / PIXEL_WIDTH;
 static constexpr float PIXEL_DY = VIEWPORT_HEIGHT / PIXEL_HEIGHT;
 
-static constexpr float FOCAL_LENGTH = 1.0;
+static constexpr float FOCAL_LENGTH = 4.0;
 
 struct RenderingInfo
 {
@@ -29,12 +29,14 @@ struct RenderingInfo
 	sf::Text text;
 	HittableList world;
 
+	std::vector<Sphere> spheres;
+
 	unsigned int fpsCount = 0;
 	sf::Time elapsed = sf::Time::Zero;
 	sf::Clock clock;
 
-	Point3f cameraCenter {.0f,.0f,.0f};
-	Point3f viewportCenter {.0f,.0f, -FOCAL_LENGTH };
+	Point3f cameraCenter {.0f,.0f,FOCAL_LENGTH};
+	Point3f viewportCenter = cameraCenter + Point3f{.0f,.0f, -FOCAL_LENGTH };
 	Point3f viewportUpperLeft = viewportCenter + Point3f(-VIEWPORT_WIDTH/2.f,VIEWPORT_HEIGHT/2.f,0);
 	Point3f pixel00Loc = viewportUpperLeft + Point3f{ PIXEL_DX/2.0,-PIXEL_DY/2.0,0 };
 
@@ -146,7 +148,7 @@ DLL_INIT void Init(void)
 
 	renderingInfo->buffer = new RenderColor[PIXEL_HEIGHT*PIXEL_WIDTH];
 
-	renderingInfo->window = new sf::RenderWindow(sf::VideoMode(640,480),"Raytracing");
+	renderingInfo->window = new sf::RenderWindow(sf::VideoMode(400,300),"Raytracing");
 	renderingInfo->window->setFramerateLimit(30);
 
 	renderingInfo->texture = new sf::Texture();
@@ -160,6 +162,15 @@ DLL_INIT void Init(void)
 	renderingInfo->text = sf::Text();
 	renderingInfo->text.setFont(renderingInfo->font);
 	renderingInfo->text.setCharacterSize(15);
+
+	renderingInfo->spheres.emplace_back(Point3f{0,0,-1},.5f);
+	renderingInfo->spheres.emplace_back(Point3f{1.5,0.5,-2},1.0);
+	renderingInfo->spheres.emplace_back(Point3f{-2,-3.0,-10},6.0);
+
+	for (auto& s: renderingInfo->spheres)
+	{
+		renderingInfo->world.Add(&s);
+	}
 }
 
 DLL_CLEAR void Deinit(void)
