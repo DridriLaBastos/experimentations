@@ -2,9 +2,11 @@ project(Raytracing LANGUAGES CXX)
 
 add_executable(rt main.cpp)
 
-add_library(raytracing_draw_module MODULE 
-											raytracing.cpp
+add_library(raytracing_draw_module MODULE	raytracing.cpp
 											src/ray.cpp
+											src/hittable.cpp
+											src/sphere.cpp
+											src/hittable_list.cpp
 											)
 
 target_include_directories(rt PRIVATE ${PROJECT_SOURCE_DIR})
