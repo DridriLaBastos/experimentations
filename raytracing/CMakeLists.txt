@@ -1,5 +1,7 @@
 project(Raytracing LANGUAGES CXX)
 
+include_directories(${PROJECT_SOURCE_DIR} ${sfml_SOURCE_DIR})
+
 add_executable(rt main.cpp)
 
 add_library(raytracing_draw_module MODULE	raytracing.cpp
@@ -9,9 +11,7 @@ add_library(raytracing_draw_module MODULE	raytracing.cpp
 											src/hittable_list.cpp
 											)
 
-target_include_directories(rt PRIVATE ${PROJECT_SOURCE_DIR})
-target_include_directories(raytracing_draw_module PRIVATE ${PROJECT_SOURCE_DIR} ${glm_SOURCE_DIR})
-target_link_libraries(rt PRIVATE module)
+target_link_libraries(rt PRIVATE module sfml-graphics)
 
 add_dependencies(rt raytracing_draw_module)
 

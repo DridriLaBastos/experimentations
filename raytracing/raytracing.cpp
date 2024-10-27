@@ -42,7 +42,6 @@ struct RenderingInfo
 
 	void Free(void)
 	{
-		delete window;
 		delete texture;
 		delete sprite;
 		delete[] buffer;
@@ -99,6 +98,7 @@ static void Raytracing_Compute(void)
 
 RAYTRACING_DRAW_MODULE_FUNC_DEFINITION
 {
+	renderingInfo->window = target;
 	sf::Event event;
 
 	while(renderingInfo->window->pollEvent(event))
@@ -132,8 +132,6 @@ RAYTRACING_DRAW_MODULE_FUNC_DEFINITION
 		renderingInfo->fpsCount = 0;
 		renderingInfo->elapsed = sf::Time::Zero;
 	}
-
-	return renderingInfo->window->isOpen();
 }
 
 DLL_INIT void Init(void)
@@ -147,9 +145,6 @@ DLL_INIT void Init(void)
 	renderingInfo = new RenderingInfo();
 
 	renderingInfo->buffer = new RenderColor[PIXEL_HEIGHT*PIXEL_WIDTH];
-
-	renderingInfo->window = new sf::RenderWindow(sf::VideoMode(400,300),"Raytracing");
-	renderingInfo->window->setFramerateLimit(30);
 
 	renderingInfo->texture = new sf::Texture();
 	renderingInfo->texture->create(PIXEL_WIDTH,PIXEL_HEIGHT);
@@ -165,7 +160,7 @@ DLL_INIT void Init(void)
 
 	renderingInfo->spheres.emplace_back(Point3f{0,0,-1},.5f);
 	renderingInfo->spheres.emplace_back(Point3f{1.5,0.5,-2},1.0);
-	renderingInfo->spheres.emplace_back(Point3f{-2,-3.0,-10},6.0);
+	renderingInfo->spheres.emplace_back(Point3f{-2,-1.0,-15},6.0);
 
 	for (auto& s: renderingInfo->spheres)
 	{
