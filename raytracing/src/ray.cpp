@@ -1,4 +1,4 @@
-#include "ray.hpp"
+#include "graphics/ray.hpp"
 
 Ray::Ray(const Point3f origin, const Vec3f direction): mOrigin(origin), mDirection(direction)
 {
