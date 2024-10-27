@@ -21,6 +21,7 @@ public:
 
 public:
 	Camera& WithAspectRatio(const float widthOverHeightRatio, const float pixelWidth, const float viewportWidth);
+	Camera& WithSamplePerPixel(const unsigned int samples);
 
 private:
 	void ComputeInternal(const unsigned int pixelWidth, const unsigned int pixelHeight,
@@ -29,6 +30,9 @@ private:
 private:
 	Point3f mCenter;
 	Point3f mPixel00Loc;
+
+	unsigned int mSamplePerPixel;
+
 	float mFocalLength;
 
 	float mPixelWidth;
