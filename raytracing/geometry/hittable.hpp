@@ -1,7 +1,7 @@
 #ifndef HITTABLE_HPP
 #define HITTABLE_HPP
 
-#include "ray.hpp"
+#include "graphics/ray.hpp"
 #include "util.hpp"
 
 struct HitRecord
