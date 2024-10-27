@@ -1,4 +1,5 @@
 #include <dlfcn.h>
+#include <cstring>
 
 #include "platforme.hpp"
 
