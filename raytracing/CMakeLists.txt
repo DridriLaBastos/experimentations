@@ -6,8 +6,9 @@ add_executable(rt main.cpp)
 
 add_library(raytracing_draw_module MODULE	raytracing.cpp
 											src/ray.cpp
-											src/hittable.cpp
 											src/sphere.cpp
+											src/camera.cpp
+											src/hittable.cpp
 											src/hittable_list.cpp
 											)
 

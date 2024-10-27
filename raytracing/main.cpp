@@ -13,22 +13,22 @@
 
 int main(void)
 {
-	sf::RenderWindow target (sf::VideoMode(640,480),"Raytracing");
-	target.setFramerateLimit(30);
+	sf::RenderWindow window (sf::VideoMode(640,480),"Raytracing");
+	window.setFramerateLimit(30);
 
 	RAYTRACING_DRAW_MODULE_FUNC_RET(*HotReloadedRaytracingDrawModuleFuncPtr)(RAYTRACING_DRAW_MODULE_FUNC_PARAMETERS) = nullptr;
 	Module raytracingDrawModule (RAYTRACING_DRAW_MODULE_FULL_PATH,RAYTRACING_DRAW_MODULE_COPY_FULL_PATH);
 
 	raytracingDrawModule.LoadSymbol(FUNCTION_NAME(RAYTRACING_DRAW_MODULE_SYMBOL_NAME),&HotReloadedRaytracingDrawModuleFuncPtr);
 
-	while (target.isOpen())
+	while (window.isOpen())
 	{
 		if(raytracingDrawModule.ReloadIfNeeded())
 		{
 			raytracingDrawModule.LoadSymbol(FUNCTION_NAME(RAYTRACING_DRAW_MODULE_SYMBOL_NAME),&HotReloadedRaytracingDrawModuleFuncPtr);
 		}
 
-		HotReloadedRaytracingDrawModuleFuncPtr(&target);
+		HotReloadedRaytracingDrawModuleFuncPtr(window);
 	}
 
 	return EXIT_SUCCESS;
