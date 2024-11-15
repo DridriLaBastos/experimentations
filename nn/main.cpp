@@ -35,6 +35,17 @@ static float Cost (const float w0, const float w1, const bool verbose = false)
 	return finalError / std::size(trainingSet);
 }
 
+static float DeriveW0(const float h, const float w0, const float w1)
+{
+	return (Cost(w0+h,w1) - Cost(w0,w1))/h;
+}
+
+static float DeriveW1(const float h, const float w0, const float w1)
+{
+	return (Cost(w0,w1+h) - Cost(w0,w1))/h;
+}
+
+
 int main(void)
 {
 	// Seed with a real random value if available
@@ -43,7 +54,22 @@ int main(void)
 	std::uniform_real_distribution<float> d (10,100);
 
 	float w0 = d(e), w1 = d(e);
-	printf("Final error : %.3f\n", Cost(w0,w1));
+	const float eps = 1e-3;
+	printf("Final error : %.3f\n", Cost(w0-eps*0,w1));
+
+	//Apllying a rate because the value of the derivative might be too big
+	const float rate = 1e-3;
+
+	for (size_t i = 0; i < 10000; i += 1)
+	{
+		const float dW0 = DeriveW0(eps,w0,w1) * rate;
+		const float dW1 = DeriveW1(eps,w0,w1) * rate;
+		w0 -= dW0;
+		w1 -= dW1;
+		printf("Final error : %.3f\n", Cost(w0,w1));
+	}
+
+	Cost(w0,w1,true);
 
 	return EXIT_SUCCESS;
 }
