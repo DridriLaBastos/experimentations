@@ -1,77 +1,52 @@
-use std::{borrow::BorrowMut, cell::RefCell, clone, fs, io::{BufRead, BufReader, Read, Write}, net::{TcpListener, TcpStream}, ops::Deref, str::FromStr, sync::Arc, thread::{sleep, Thread}, time::Duration, usize};
+use std::{borrow::BorrowMut, cell::RefCell, clone, fs, io::{BufRead, BufReader, Read, Write}, net::{TcpListener, TcpStream}, ops::Deref, process::id, str::FromStr, sync::Arc, thread::{self, current, sleep, Thread, ThreadId}, time::Duration, usize};
 
 mod threading;
 
-fn handle_request_thread_function(id: usize, queue: std::sync::Arc<threading::Queue<&str>>)
+struct Connection {
+	connection: TcpStream,
+	http_request: Vec<String>,
+}
+
+fn handle_request_thread_function(id: usize, queue: std::sync::Arc<threading::Queue<Connection>>)
 {
-	println!("Running thread {id}");
-	for _ in 0..5 {
-		let entry = queue.get();
-		println!("Got value {entry} from {id}");
-		sleep(Duration::from_secs(10));
+	loop {
+		let mut entry = queue.get();
+		entry.connection.write_all(b"HTTP/1.1 200 OK\r\n\r\n");
 	}
 }
 
 //TODO: To be quick I use unwrap, but those cases should be handled properly
-fn handle_data_received(mut stream: TcpStream, queue: &std::sync::Arc<threading::Queue<&str>>)
+fn handle_data_received(stream: TcpStream, queue: &std::sync::Arc<threading::Queue<Connection>>)
 {
-	let buf_reader = BufReader::new(&stream);
+	let mut buf_reader = BufReader::new(&stream);
+	let mut http_request = Vec::new();
 
-	let http_request: Vec<_> = buf_reader
-						.lines()
-						.map(|result| result.unwrap())
-						.take_while(|line| !line.is_empty())
-						.collect();
+	let connection_addr = stream.peer_addr().unwrap();
+	println!("Got Connection from {}.{}",connection_addr.ip(),connection_addr.port());
 
-	// let http_request: Vec<_> = buf_reader.lines().map(|result| result.unwrap()).take_while(|line| !line.is_empty()).collect();
-	// let http_request_header = http_request[0].as_str();
+	for maybe_line in buf_reader.lines() {
+		let line = maybe_line.unwrap();
+		if line.is_empty() {
+			break;
+		} else {
+			http_request.push(line);
+		}
+	}
 
-	// let (html_response_status, filename) = match http_request_header {
-	// 	"GET / HTTP/1.1" => ("HTTP/1.1 200 OK", std::path::Path::new("test/index.html")),
-	// 	"GET /sleep HTTP/1.1" => {
-	// 		std::thread::sleep(std::time::Duration::from_secs(5));
-	// 		("HTTP/1.1 200 OK", std::path::Path::new("test/index.html"))
-	// 	}
-	// 	_ => ("HTTP/1.1 404 NOT FOUND", std::path::Path::new("test/404.html")),
-	// };
-
-	// println!("Request: {http_request:#?}");
-
-	// let html_response_content = fs::read_to_string(filename).unwrap_or(
-	// 	String::from_str("<!DOCTYPE html>
-	// 				<html lang=\"en\">
-	// 				<head>
-	// 					<meta charset=\"UTF-8\">
-	// 					<meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">
-	// 					<title>Document</title>
-	// 				</head>
-	// 				<body>
-	// 					<h1>Internal sever error</h1>
-	// 				</body>
-	// 				</html>").unwrap()
-	// );
-
-	// let html_response_content_length = html_response_content.len();
-
-	// let response = format!("{html_response_status}\r\nContent-Length: {html_response_content_length}\r\n\r\n{html_response_content}");
-	// stream.write_all(response.as_bytes()).unwrap();
-
+	queue.push(Connection { connection: (stream), http_request: (http_request) });
 }
 
-fn server_loop(listener: TcpListener, queue: std::sync::Arc<threading::Queue<&str>>)
+fn server_loop(listener: TcpListener, queue: std::sync::Arc<threading::Queue<Connection>>)
 {
-	// for stream in listener.incoming()
-	// {
-	// 	match stream
-	// 	{
-	// 		Ok(s) => handle_data_received(s, &queue),
-	// 		Err(e) => panic!("Unable to create a connection : {e:?}"),
-	// 	}
-	// }
-
-	for i in 0..5 {
-		queue.push("New value");
-		sleep(Duration::from_secs(3));
+	let addr = listener.local_addr().unwrap();
+	println!("Listening from {addr}");
+	for stream in listener.incoming()
+	{
+		match stream
+		{
+			Ok(s) => handle_data_received(s, &queue),
+			Err(e) => panic!("Unable to create a connection : {e:?}"),
+		}
 	}
 }
 
@@ -92,7 +67,7 @@ fn main() {
 	}
 
 	for h in handles {
-		match(h.join()) {
+		match h.join() {
 			Ok(_)=>(),
 			Err(e)=>println!("{e:?}")
 		}

@@ -70,7 +70,6 @@ impl<T> super::queue::Queue<T> {
 
 		if r.is_none() {
 			self.make_waiting();
-
 			//here there is an error if r is None
 			r = self.maybe_data();
 		}
