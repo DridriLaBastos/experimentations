@@ -1,4 +1,4 @@
-use std::{borrow::BorrowMut, cell::RefCell, clone, fs, io::{BufRead, BufReader, Read, Write}, net::{TcpListener, TcpStream}, ops::Deref, process::id, str::FromStr, sync::Arc, thread::{self, current, sleep, Thread, ThreadId}, time::Duration, usize};
+use std::{io::{BufRead, BufReader, Write}, net::{TcpListener, TcpStream}, usize};
 
 mod threading;
 
@@ -7,7 +7,7 @@ struct Connection {
 	http_request: Vec<String>,
 }
 
-fn handle_request_thread_function(id: usize, queue: std::sync::Arc<threading::Queue<Connection>>)
+fn handle_request_thread_function(_id: usize, queue: std::sync::Arc<threading::Queue<Connection>>)
 {
 	loop {
 		let mut entry = queue.get();
@@ -18,7 +18,7 @@ fn handle_request_thread_function(id: usize, queue: std::sync::Arc<threading::Qu
 //TODO: To be quick I use unwrap, but those cases should be handled properly
 fn handle_data_received(stream: TcpStream, queue: &std::sync::Arc<threading::Queue<Connection>>)
 {
-	let mut buf_reader = BufReader::new(&stream);
+	let buf_reader = BufReader::new(&stream);
 	let mut http_request = Vec::new();
 
 	let connection_addr = stream.peer_addr().unwrap();

@@ -1,4 +1,4 @@
-use std::{collections::VecDeque, sync::Mutex, thread::{self, current, park}};
+use std::{collections::VecDeque, sync::Mutex, thread::{self, park}};
 
 use super::Queue;
 
