@@ -4,10 +4,11 @@ mod threading;
 
 fn handle_request_thread_function(id: usize, queue: std::sync::Arc<threading::Queue<&str>>)
 {
+	println!("Running thread {id}");
 	for _ in 0..5 {
-		// queue.as_ref().get();
-		sleep(Duration::from_secs(5));
-		println!("handle_request_thread_function {id}")
+		let entry = queue.get();
+		println!("Got value {entry} from {id}");
+		sleep(Duration::from_secs(10));
 	}
 }
 
@@ -21,7 +22,6 @@ fn handle_data_received(mut stream: TcpStream, queue: &std::sync::Arc<threading:
 						.map(|result| result.unwrap())
 						.take_while(|line| !line.is_empty())
 						.collect();
-	queue.push("Bonjour");
 
 	// let http_request: Vec<_> = buf_reader.lines().map(|result| result.unwrap()).take_while(|line| !line.is_empty()).collect();
 	// let http_request_header = http_request[0].as_str();
@@ -60,13 +60,18 @@ fn handle_data_received(mut stream: TcpStream, queue: &std::sync::Arc<threading:
 
 fn server_loop(listener: TcpListener, queue: std::sync::Arc<threading::Queue<&str>>)
 {
-	for stream in listener.incoming()
-	{
-		match stream
-		{
-			Ok(s) => handle_data_received(s, &queue),
-			Err(e) => panic!("Unable to create a connection : {e:?}"),
-		}
+	// for stream in listener.incoming()
+	// {
+	// 	match stream
+	// 	{
+	// 		Ok(s) => handle_data_received(s, &queue),
+	// 		Err(e) => panic!("Unable to create a connection : {e:?}"),
+	// 	}
+	// }
+
+	for i in 0..5 {
+		queue.push("New value");
+		sleep(Duration::from_secs(3));
 	}
 }
 
