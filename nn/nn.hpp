@@ -23,12 +23,12 @@ template <typename _T>
 using MallocDeleterUniquePtr = std::unique_ptr<_T,MallocDeleter<_T> >;
 
 template <unsigned int Row, unsigned int Column>
-class Matrice
+class Matrix
 {
     public:
-        Matrice(void);
+        Matrix(void);
 
-        void operator+= (const Matrice& m);
+        void operator+= (const Matrix& m);
     
     private:
         MallocDeleterUniquePtr<float> mWeights;
