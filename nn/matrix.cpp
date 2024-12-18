@@ -2,6 +2,7 @@
 #include "nn.hpp"
 #endif
 
+#include <random>
 #include <cstdio>
 
 template <size_t Row, size_t Column>
@@ -40,4 +41,22 @@ void Matrix<L,M>::Print() const
 		}
 		puts("");
 	}
+}
+
+/// Static functions
+template <size_t L, size_t M>
+Matrix<L,M> Matrix<L,M>::WithRandom(const float min, const float max)
+{
+	// Seed with a real random value if available
+	std::random_device r;
+	std::mt19937 e (r());
+	std::uniform_real_distribution<float> d (min,max);
+	Matrix<L,M> m;
+
+	for(size_t i = 0; i < m.SIZE; i += 1)
+	{
+		m.mWeights[i] = d(e);
+	}
+
+	return m;
 }

@@ -30,6 +30,12 @@ class Matrix
 
         void operator+= (const Matrix& m);
 		void Print(void) const;
+
+		static constexpr size_t SIZE = Row*Column;
+	
+	public:
+
+		static Matrix<Row,Column> WithRandom(const float min = .0f, const float max = 1.f);
     
     private:
         MallocDeleterUniquePtr<float> mWeightsPtr;
