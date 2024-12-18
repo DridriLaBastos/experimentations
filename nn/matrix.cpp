@@ -3,12 +3,12 @@
 #endif
 
 template <unsigned int Row, unsigned int Column>
-Matrice<Row,Column>::Matrice(): mWeights(MallocHelper<float>(Row*Column),MallocDeleter<float>())
+Matrix<Row,Column>::Matrix(): mWeights(MallocHelper<float>(Row*Column),MallocDeleter<float>())
 {
 }
 
 template <unsigned int Row, unsigned int Column>
-void Matrice<Row,Column>::operator+=(const Matrice<Row,Column>& m)
+void Matrix<Row,Column>::operator+=(const Matrix<Row,Column>& m)
 {
     const size_t size = Row*Column;
 
