@@ -22,20 +22,25 @@ _T* MallocHelper(const size_t arrayCount = 1)
 template <typename _T>
 using MallocDeleterUniquePtr = std::unique_ptr<_T,MallocDeleter<_T> >;
 
-template <unsigned int Row, unsigned int Column>
+template <size_t Row, size_t Column>
 class Matrix
 {
     public:
         Matrix(void);
 
         void operator+= (const Matrix& m);
+		void Print(void) const;
     
     private:
-        MallocDeleterUniquePtr<float> mWeights;
+        MallocDeleterUniquePtr<float> mWeightsPtr;
+		float* mWeights;
 };
 
+template <size_t L, size_t M, size_t N>
+Matrix <L,N> operator* (const Matrix<L,M>& A, const Matrix<M,N>& B);
+
 #if NN_HEADER_ONLY
-#include "matrice.cpp"
+#include "matrix.cpp"
 #endif
 
 #endif
