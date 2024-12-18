@@ -1,8 +1,9 @@
 #ifndef NN_HPP
 #define NN_HPP
 
-#include <memory>
+#include <vector>
 #include <cstdlib>
+#include <iostream>
 
 template <typename _T>
 struct MallocDeleter {
@@ -13,14 +14,46 @@ struct MallocDeleter {
     }
 };
 
-template<typename _T>
-_T* MallocHelper(const size_t arrayCount = 1)
+template <typename T>
+struct Mallocator
 {
-    return (_T*)malloc(sizeof(_T)*arrayCount);
-}
+	using value_type = T;
+    Mallocator() = default;
+ 
+    template<class U>
+    constexpr Mallocator(const Mallocator <U>&) noexcept {}
+ 
+    T* allocate(std::size_t n)
+    {
+        if (n > std::numeric_limits<std::size_t>::max() / sizeof(T))
+            throw std::bad_array_new_length();
+		
+		auto p = static_cast<T*>(std::malloc(n * sizeof(T)));
 
-template <typename _T>
-using MallocDeleterUniquePtr = std::unique_ptr<_T,MallocDeleter<_T> >;
+		if (!p)
+			throw std::bad_alloc();
+ 
+		#ifdef MALLOCATOR_REPORT
+            report(p, n);
+		#endif
+            return p;
+    }
+ 
+    void deallocate(T* p, std::size_t n) noexcept
+    {
+	#ifdef MALLOCATOR_REPORT
+        report(p, n, 0);
+	#endif
+        std::free(p);
+    }
+private:
+    void report(T* p, std::size_t n, bool alloc = true) const
+    {
+        std::cout << (alloc ? "Alloc: " : "Dealloc: ") << sizeof(T) * n
+                  << " bytes at " << std::hex << std::showbase
+                  << reinterpret_cast<void*>(p) << std::dec << '\n';
+    }
+};
 
 template <size_t Row, size_t Column>
 class Matrix
@@ -38,8 +71,7 @@ class Matrix
 		static Matrix<Row,Column> WithRandom(const float min = .0f, const float max = 1.f);
     
     private:
-        MallocDeleterUniquePtr<float> mWeightsPtr;
-		float* mWeights;
+		std::vector<float,Mallocator<float> > mWeights;
 };
 
 template <size_t L, size_t M, size_t N>

@@ -6,10 +6,9 @@
 #include <cstdio>
 
 template <size_t Row, size_t Column>
-Matrix<Row,Column>::Matrix(): mWeightsPtr(MallocHelper<float>(Row*Column),MallocDeleter<float>()), mWeights(nullptr)
+Matrix<Row,Column>::Matrix(): mWeights(Row*Column)
 {
 	static_assert((Row != 0) && (Column != 0), "Matrices rows or column number can't be equal to 0");
-	mWeights = mWeightsPtr.get();
 }
 
 template <size_t Row, size_t Column>
@@ -26,6 +25,7 @@ void Matrix<Row,Column>::operator+=(const Matrix<Row,Column>& m)
 template <size_t L, size_t M, size_t N>
 Matrix <L,N> operator* (const Matrix<L,M>& A, const Matrix<M,N>& B)
 {
+
 	return Matrix<L,M>();
 }
 
