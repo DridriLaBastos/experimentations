@@ -6,6 +6,8 @@
 #include <cstdio>
 #include <cmath>
 
+#include "nn.hpp"
+
 static float trainingSet [][3] = {
 	{0,0,0},
 	{0,1,1},
@@ -86,6 +88,8 @@ int main(void)
 	}
 
 	Cost(w0,w1,b,true);
+
+	Layer l;
 
 	return EXIT_SUCCESS;
 }
