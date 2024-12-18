@@ -66,30 +66,32 @@ static float DeriveB(const float h, const float w0, const float w1, const float 
 int main(void)
 {
 	// Seed with a real random value if available
-	std::random_device r;
-	std::mt19937 e (r());
-	std::uniform_real_distribution<float> d (0,2);
+	// std::random_device r;
+	// std::mt19937 e (r());
+	// std::uniform_real_distribution<float> d (0,2);
 
-	float w0 = d(e), w1 = d(e), b = d(e);
-	const float eps = 1e-2;
+	// float w0 = d(e), w1 = d(e), b = d(e);
+	// const float eps = 1e-2;
 
-	//Apllying a rate because the value of the derivative might be too big
-	const float rate = 1e-1;
+	// //Apllying a rate because the value of the derivative might be too big
+	// const float rate = 1e-1;
 
-	for (size_t i = 0; i < 10000; i += 1)
-	{
-		const float dW0 = DeriveW0(eps,w0,w1,b) * rate;
-		const float dW1 = DeriveW1(eps,w0,w1,b) * rate;
-		const float db = DeriveB(eps,w0,w1,b) * rate;
-		w0 -= dW0;
-		w1 -= dW1;
-		b -= db;
-		printf("Final error : %.3f\n", Cost(w0,w1,b));
-	}
+	// for (size_t i = 0; i < 10000; i += 1)
+	// {
+	// 	const float dW0 = DeriveW0(eps,w0,w1,b) * rate;
+	// 	const float dW1 = DeriveW1(eps,w0,w1,b) * rate;
+	// 	const float db = DeriveB(eps,w0,w1,b) * rate;
+	// 	w0 -= dW0;
+	// 	w1 -= dW1;
+	// 	b -= db;
+	// 	printf("Final error : %.3f\n", Cost(w0,w1,b));
+	// }
 
-	Cost(w0,w1,b,true);
+	// Cost(w0,w1,b,true);
 
-	Layer l;
+	Matrix<1,2> l = Matrix<1,2>::WithRandom();
+
+	l.Print();
 
 	return EXIT_SUCCESS;
 }
