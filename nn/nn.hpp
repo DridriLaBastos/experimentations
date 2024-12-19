@@ -78,8 +78,6 @@ class Matrix
 template <size_t L, size_t M, size_t N>
 Matrix <L,N> operator* (const Matrix<L,M>& A, const Matrix<M,N>& B);
 
-#if NN_HEADER_ONLY
 #include "matrix.cpp"
-#endif
 
 #endif
