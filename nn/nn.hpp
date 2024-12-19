@@ -5,15 +5,6 @@
 #include <cstdlib>
 #include <iostream>
 
-template <typename _T>
-struct MallocDeleter {
-    void operator()(_T* ptr)
-    {
-        free(ptr);
-        ptr = nullptr;
-    }
-};
-
 template <typename T>
 struct Mallocator
 {
@@ -58,6 +49,9 @@ private:
 template <size_t Row, size_t Column>
 class Matrix
 {
+	public:
+		using Vector = std::vector<float,Mallocator<float> >;
+
     public:
         Matrix(void);
 
@@ -67,12 +61,11 @@ class Matrix
 		static constexpr size_t SIZE = Row*Column;
 	
 	public:
-
 		static Matrix<Row,Column> WithRandom(const float min = .0f, const float max = 1.f);
 		static Matrix<Row,Column> WithValue(const float x = 0.0);
     
     private:
-		std::vector<float,Mallocator<float> > mWeights;
+		Vector mWeights;
 };
 
 template <size_t L, size_t M, size_t N>
