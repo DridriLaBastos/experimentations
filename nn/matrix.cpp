@@ -4,9 +4,21 @@
 #include <cstdio>
 
 template <size_t Row, size_t Column>
-Matrix<Row,Column>::Matrix(): mWeights(Row*Column)
+Matrix<Row,Column>::Matrix(const Vector& init): mWeights(Row*Column,0)
 {
 	static_assert((Row != 0) && (Column != 0), "Matrices rows or column number can't be equal to 0");
+	size_t weightIndex = 0;
+
+	for (const float& w: init)
+	{
+		mWeights[weightIndex] = w;
+		weightIndex += 1;
+
+		if (weightIndex >= Row*Column)
+		{
+			break;
+		}
+	}
 }
 
 template <size_t Row, size_t Column>
@@ -20,12 +32,41 @@ void Matrix<Row,Column>::operator+=(const Matrix<Row,Column>& m)
     }
 }
 
+template <size_t Row, size_t Column>
+float& Matrix<Row,Column>::operator[] (const size_t i) { return mWeights[i]; }
+
+template <size_t Row, size_t Column>
+const float& Matrix<Row,Column>::operator[] (const size_t i) const { return mWeights[i]; }
+
+template <size_t Column>
+static constexpr size_t LinearIndex(const size_t x, const size_t y)
+{
+	return y*Column+x;
+};
+
 //TODO: finish implementation
 template <size_t L, size_t M, size_t N>
-Matrix <L,N> operator* (const Matrix<L,M>& A, const Matrix<M,N>& B)
+Matrix<L,N> operator* (const Matrix<L,M>& A, const Matrix<M,N>& B)
 {
-	auto ret = Matrix<L,M>::WithValue(0);
-	return Matrix<L,M>();
+	auto ret = Matrix<L,N>::WithValue(0);
+
+	for (size_t row = 0; row < L; row += 1)
+	{
+		for (size_t col = 0; col < N; col += 1)
+		{
+			const size_t retIndex = LinearIndex<N>(row,col);
+			float sum = 0;
+			for (size_t k = 0; k < M; k += 1)
+			{
+				const size_t aIndex = LinearIndex<M>(k,row);
+				const size_t bIndex = LinearIndex<N>(col,k);
+				sum += A[aIndex] * B[bIndex];
+			}
+			ret[row*N+col] = sum;
+		}
+	}	
+
+	return ret;
 }
 
 template <size_t L, size_t M>

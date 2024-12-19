@@ -89,9 +89,14 @@ int main(void)
 
 	// Cost(w0,w1,b,true);
 
-	Matrix<1,2> l = Matrix<1,2>::WithRandom();
+	Matrix<3,3> m1 ({0,1,0, 0,0,1, 1,0,0});
+	Matrix<3,2> m2 ({1,2,3,4,5,6});
 
-	l.Print();
+	m1.Print();
+	puts("");
+	m2.Print();
+	puts("");
+	(m1 * m2).Print();
 
 	return EXIT_SUCCESS;
 }

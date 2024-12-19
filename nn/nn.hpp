@@ -53,11 +53,16 @@ class Matrix
 		using Vector = std::vector<float,Mallocator<float> >;
 
     public:
-        Matrix(void);
+        Matrix(const Vector& init = {});
 
-        void operator+= (const Matrix& m);
 		void Print(void) const;
 
+public:
+        void operator+= (const Matrix& m);
+		float& operator[] (const size_t i);
+		const float& operator[] (const size_t i) const;
+
+public:
 		static constexpr size_t SIZE = Row*Column;
 	
 	public:
