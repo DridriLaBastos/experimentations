@@ -22,10 +22,11 @@ void Matrix<Row,Column>::operator+=(const Matrix<Row,Column>& m)
     }
 }
 
+//TODO: finish implementation
 template <size_t L, size_t M, size_t N>
 Matrix <L,N> operator* (const Matrix<L,M>& A, const Matrix<M,N>& B)
 {
-
+	auto ret = Matrix<L,M>::WithValue(0);
 	return Matrix<L,M>();
 }
 
@@ -59,4 +60,13 @@ Matrix<L,M> Matrix<L,M>::WithRandom(const float min, const float max)
 	}
 
 	return m;
+}
+
+template <size_t L, size_t M>
+Matrix<L,M> Matrix<L,M>::WithValue(const float x)
+{
+	for (float& w: mWeights)
+	{
+		w = x;
+	}
 }

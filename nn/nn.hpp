@@ -69,6 +69,7 @@ class Matrix
 	public:
 
 		static Matrix<Row,Column> WithRandom(const float min = .0f, const float max = 1.f);
+		static Matrix<Row,Column> WithValue(const float x = 0.0);
     
     private:
 		std::vector<float,Mallocator<float> > mWeights;
