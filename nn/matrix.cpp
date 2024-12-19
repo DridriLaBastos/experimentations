@@ -63,8 +63,11 @@ Matrix<L,M> Matrix<L,M>::WithRandom(const float min, const float max)
 template <size_t L, size_t M>
 Matrix<L,M> Matrix<L,M>::WithValue(const float x)
 {
-	for (float& w: mWeights)
+	Matrix<L,M> m;
+	for (float& w: m.mWeights)
 	{
 		w = x;
 	}
+
+	return m;
 }
