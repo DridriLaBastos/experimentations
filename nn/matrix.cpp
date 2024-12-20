@@ -28,7 +28,7 @@ void Matrix<Row,Column>::operator+=(const Matrix<Row,Column>& m)
 
     for (size_t i = 0; i < size; i += 1)
     {
-        mWeights[i] += m.mWeights.get()[i];
+        mWeights[i] += m.mWeights[i];
     }
 }
 
