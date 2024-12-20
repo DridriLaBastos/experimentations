@@ -44,6 +44,19 @@ static constexpr size_t LinearIndex(const size_t x, const size_t y)
 	return y*Column+x;
 };
 
+template <size_t L, size_t M>
+Matrix<L,M> operator+(const Matrix<L,M>& A, const Matrix<L,M>& B)
+{
+	Matrix<L,M> ret;
+
+	for (size_t i = 0; i < L*M; i += 1)
+	{
+		ret[i] = A[i] + B[i];
+	}
+
+	return ret;
+}
+
 //TODO: finish implementation
 template <size_t L, size_t M, size_t N>
 Matrix<L,N> operator* (const Matrix<L,M>& A, const Matrix<M,N>& B)

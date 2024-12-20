@@ -1,6 +1,7 @@
 #ifndef NN_HPP
 #define NN_HPP
 
+#include <cmath>
 #include <vector>
 #include <cstdlib>
 #include <iostream>
@@ -46,12 +47,11 @@ private:
     }
 };
 
+using Vector = std::vector<float,Mallocator<float> >;
+
 template <size_t Row, size_t Column>
 class Matrix
 {
-	public:
-		using Vector = std::vector<float,Mallocator<float> >;
-
     public:
         Matrix(const Vector& init = {});
 
@@ -75,6 +75,24 @@ public:
 
 template <size_t L, size_t M, size_t N>
 Matrix <L,N> operator* (const Matrix<L,M>& A, const Matrix<M,N>& B);
+
+template <size_t L, size_t M>
+Matrix<L,M> operator+(const Matrix<L,M>& A, const Matrix<L,M>& B);
+
+float Sigmoidf(const float x, const float a = 1.0)
+{
+    return a/(1.f + std::exp(-x));
+}
+
+template<size_t L, size_t M>
+Matrix<L,M>&& Sigmoidf(Matrix<L,M>&& m, const float a = 1.0)
+{
+    for (size_t i = 0; i < L*M; i+=1)
+    {
+        m[i] = Sigmoidf(m[i],a);
+    }
+    return std::move(m);
+}
 
 #include "matrix.cpp"
 
