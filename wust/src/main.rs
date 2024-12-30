@@ -7,7 +7,7 @@ struct Connection {
 	http_request: Vec<String>,
 }
 
-fn handle_request_thread_function(_id: usize, queue: std::sync::Arc<threading::Queue<Connection>>)
+fn handle_request_thread_function(queue: std::sync::Arc<threading::Queue<Connection>>)
 {
 	loop {
 		let mut entry = queue.get();
@@ -56,9 +56,9 @@ fn main() {
 	let queue = std::sync::Arc::new(threading::Queue::new(5));
 	let mut handles = std::vec::Vec::new();
 
-	for id in 0..thread_number {
+	for _ in 0..thread_number {
 		let new_queue = std::sync::Arc::clone(&queue);
-		handles.push(std::thread::spawn(move || { handle_request_thread_function(id,new_queue); }));
+		handles.push(std::thread::spawn(move || { handle_request_thread_function(new_queue); }));
 	}
 	
 	match did_listen {
