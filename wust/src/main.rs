@@ -7,28 +7,36 @@ struct Connection {
 	http_request: Vec<String>,
 }
 
+fn handle_get_request(connection: &Connection, path_str: &str, version: &str)
+{
+	
+}
+
 fn handle_request_thread_function(queue: std::sync::Arc<threading::Queue<Connection>>)
 {
 	loop {
-		let mut entry = queue.get();
+		let mut connection = queue.get();
 		
 		log::debug!("*** New Request ***");
 
-		for i in 0 .. entry.http_request.len()
+		for i in 0 .. connection.http_request.len()
 		{
-			let e = &entry.http_request[i];
+			let e = &connection.http_request[i];
 			log::trace!("{e}");
 		}
 
-		let start_line_split = entry.http_request[0].split_whitespace().collect::<Vec<&str>>();
+		let start_line_split = connection.http_request[0].split_whitespace().collect::<Vec<&str>>();
 
 		match start_line_split[0] {
-			"GET" => log::info!("GET request"),
+			"GET" =>  {
+				log::info!("GET request");
+				handle_get_request(&connection, start_line_split[1], start_line_split[2]);
+			},
 			"POST" => log::info!("POST request"),
 			_ => log::info!("Unknown request"),
 		}
 
-		entry.connection.write_all(b"HTTP/1.1 200 OK\r\n\r\n");
+		connection.connection.write_all(b"HTTP/1.1 200 OK\r\n\r\n");
 	}
 }
 
