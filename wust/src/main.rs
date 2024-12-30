@@ -12,10 +12,20 @@ fn handle_request_thread_function(queue: std::sync::Arc<threading::Queue<Connect
 	loop {
 		let mut entry = queue.get();
 		
-		println!("*** New Request ***");
+		log::debug!("*** New Request ***");
 
-		for request in entry.http_request {
-			println!("{request}");
+		for i in 0 .. entry.http_request.len()
+		{
+			let e = &entry.http_request[i];
+			log::trace!("{e}");
+		}
+
+		let start_line_split = entry.http_request[0].split_whitespace().collect::<Vec<&str>>();
+
+		match start_line_split[0] {
+			"GET" => log::info!("GET request"),
+			"POST" => log::info!("POST request"),
+			_ => log::info!("Unknown request"),
 		}
 
 		entry.connection.write_all(b"HTTP/1.1 200 OK\r\n\r\n");
