@@ -11,6 +11,13 @@ fn handle_request_thread_function(queue: std::sync::Arc<threading::Queue<Connect
 {
 	loop {
 		let mut entry = queue.get();
+		
+		println!("*** New Request ***");
+
+		for request in entry.http_request {
+			println!("{request}");
+		}
+
 		entry.connection.write_all(b"HTTP/1.1 200 OK\r\n\r\n");
 	}
 }
@@ -22,7 +29,7 @@ fn handle_data_received(stream: TcpStream, queue: &std::sync::Arc<threading::Que
 	let mut http_request = Vec::new();
 
 	let connection_addr = stream.peer_addr().unwrap();
-	println!("Got Connection from {}.{}",connection_addr.ip(),connection_addr.port());
+	log::info!("Got Connection from {}.{}",connection_addr.ip(),connection_addr.port());
 
 	for maybe_line in buf_reader.lines() {
 		let line = maybe_line.unwrap();
@@ -50,11 +57,14 @@ fn server_loop(listener: TcpListener, queue: std::sync::Arc<threading::Queue<Con
 	}
 }
 
+//IMPORTANT: For the log messages to be displayed, the RUST_LOG environment variable must set
 fn main() {
 	let did_listen = TcpListener::bind("127.0.0.1:7878");
 	let thread_number: usize = 2;
 	let queue = std::sync::Arc::new(threading::Queue::new(5));
 	let mut handles = std::vec::Vec::new();
+
+	env_logger::init();
 
 	for _ in 0..thread_number {
 		let new_queue = std::sync::Arc::clone(&queue);
