@@ -20,7 +20,14 @@ FetchContent_Declare(glm
     GIT_TAG 1.0.1
 	GIT_PROGRESS ON
 	)
-FetchContent_MakeAvailable(sfml glm)
+
+FetchContent_Declare(box2d
+	GIT_REPOSITORY https://github.com/erincatto/box2d
+	GIT_TAG v3.0.0
+	GIT_PROGRESS ON
+	)
+
+FetchContent_MakeAvailable(sfml glm box2d)
 
 if (!${MSVC})
 	add_compile_options(-Wall -Wextra)
