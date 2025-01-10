@@ -10,6 +10,9 @@ constexpr float PIXEL_PRE_METER = 5.f;
 
 int main(int argc, char const *argv[])
 {
+	b2Version version = b2GetVersion();
+	printf("Box2D version %d.%d.%d\n", version.major, version.minor, version.revision);
+	
 	b2WorldDef worlDef = b2DefaultWorldDef();
 	worlDef.gravity = (b2Vec2){0.0f, -9.8f};
 
