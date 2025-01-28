@@ -62,15 +62,8 @@ int main(int argc, char const *argv[])
 {
 	RenderData renderData(720,480);
 
-	sf::RenderWindow window(sf::VideoMode(WINDOW_WIDTH, WINDOW_HEIGHT), "Evolve");
+	sf::RenderWindow window(sf::VideoMode({680,400}),"Evolve");
 	window.setFramerateLimit(30);
-
-	sf::Texture texture;
-	texture.create(renderData.width, renderData.height);
-
-	sf::Sprite sprite(texture);
-
-	sf::Clock clock;
 
 	// PutRectangle(renderData, 0, 100, 100, 100, Colors::Green);
 	// PutRectangle(renderData, 0, 200, 100, 100, Colors::Blue);
@@ -81,25 +74,17 @@ int main(int argc, char const *argv[])
 
 	while (window.isOpen())
 	{
-		sf::Event event;
-		while (window.pollEvent(event))
+		while (auto event = window.pollEvent())
 		{
-			if (event.type == sf::Event::Closed) window.close();
+			if (event->is<sf::Event::Closed>())
+			{
+				window.close();
+			}
 		}
-
-		const float elapsed = clock.restart().asSeconds();
-
-		color.red += 50 * elapsed;
-		color.green += 100 * elapsed;
-		color.blue += 150 * elapsed;
-
-		PutRectangle(renderData, -10, -20, 100,100, color);
-		texture.update((sf::Uint8*)renderData.buffer.get());
-
-		window.clear();
-		window.draw(sprite);
-		window.display();
 	}
+
+	window.clear();
+	window.display();
 
 	return 0;
 }
