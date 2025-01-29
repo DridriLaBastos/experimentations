@@ -1,4 +1,4 @@
-#include "box2d/box2d.h"
+#include <iostream>
 
 #include "SFML/Graphics.hpp"
 
@@ -72,19 +72,56 @@ int main(int argc, char const *argv[])
 
 	PutRectangle(renderData, 0, 0, renderData.width, renderData.height, Colors::LightGray);
 
+	sf::View mainCamera (window.getView());
+	window.setView(mainCamera);
+
+	sf::Texture particleTexture("/Users/adrien/Documents/Informatique/experimentations/evolve/particle.jpeg");
+
+	std::vector<sf::Sprite> particleSprites (1000, sf::Sprite(particleTexture));
+
+	for (size_t i = 0; i < window.getSize().x*window.getSize().y; i+=1)
+	{
+		const unsigned int x = i / window.getSize().x;
+		const unsigned int y = i % window.getSize().y;
+
+		particleSprites[i].setPosition({(float)x,(float)y});
+	}
+
 	while (window.isOpen())
 	{
-		while (auto event = window.pollEvent())
+		while (const std::optional event = window.pollEvent())
 		{
 			if (event->is<sf::Event::Closed>())
 			{
 				window.close();
 			}
-		}
-	}
+			else if (auto* key = event->getIf<sf::Event::KeyPressed>()) {
+				switch (key->code) {
+					case sf::Keyboard::Key::D:
+						mainCamera.move({10,0});
+					break;
 
-	window.clear();
-	window.display();
+					case sf::Keyboard::Key::A:
+						mainCamera.zoom(0.5);
+					break;
+
+					case sf::Keyboard::Key::E:
+						mainCamera.zoom(1.5);
+					break;
+
+					default:
+						break;
+				}
+			}
+		}
+
+		window.clear();
+		window.setView(mainCamera);
+		std::for_each(particleSprites.begin(), particleSprites.end(), [&window](sf::Sprite& sprite) {
+			window.draw(sprite);
+		});
+		window.display();
+	}
 
 	return 0;
 }
