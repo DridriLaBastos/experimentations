@@ -58,12 +58,20 @@ static void PutRectangle(RenderData& renderData, const float x, const float y, c
 	}
 }
 
+#define RESOURCE_PATH(path) RESOURCE_FOLDER "/" path
+
 int main(int argc, char const *argv[])
 {
 	RenderData renderData(720,480);
 
 	sf::RenderWindow window(sf::VideoMode({680,400}),"Evolve");
-	window.setFramerateLimit(30);
+	window.setFramerateLimit(60);
+
+	sf::Font font (RESOURCE_PATH("fonts/LTKaraoke-SemiBold.ttf"));
+	sf::Text text (font);
+	text.setPosition({10,10});
+	text.setCharacterSize(15);
+	text.setFillColor(sf::Color::Red);
 
 	// PutRectangle(renderData, 0, 100, 100, 100, Colors::Green);
 	// PutRectangle(renderData, 0, 200, 100, 100, Colors::Blue);
@@ -75,20 +83,28 @@ int main(int argc, char const *argv[])
 	sf::View mainCamera (window.getView());
 	window.setView(mainCamera);
 
-	sf::Texture particleTexture("/Users/adrien/Documents/Informatique/experimentations/evolve/particle.jpeg");
+	sf::Texture particleTexture(RESOURCE_PATH("textures/particle.jpeg"));
 
-	std::vector<sf::Sprite> particleSprites (1000, sf::Sprite(particleTexture));
+	constexpr unsigned int N = 50000;
+	std::vector<sf::Sprite> particleSprites (N, sf::Sprite(particleTexture));
 
-	for (size_t i = 0; i < window.getSize().x*window.getSize().y; i+=1)
+	for (size_t i = 0; i < N; i+=1)
 	{
-		const unsigned int x = i / window.getSize().x;
-		const unsigned int y = i % window.getSize().y;
-
+		const unsigned int x = i % (window.getSize().x/2);
+		const unsigned int y = i / window.getSize().y;
 		particleSprites[i].setPosition({(float)x,(float)y});
 	}
 
+	auto frameTimeBegin = Clock::now();
+	auto frameTimeEnd = Clock::now();
+	auto begin = Clock::now();
+	unsigned int frameCount = 0;
+	std::chrono::duration<double> elapsed_seconds (0);
+	std::chrono::duration<double,std::milli> averageFrameTime (0);
+
 	while (window.isOpen())
 	{
+		frameCount += 1;
 		while (const std::optional event = window.pollEvent())
 		{
 			if (event->is<sf::Event::Closed>())
@@ -120,7 +136,26 @@ int main(int argc, char const *argv[])
 		std::for_each(particleSprites.begin(), particleSprites.end(), [&window](sf::Sprite& sprite) {
 			window.draw(sprite);
 		});
+		window.setView(window.getDefaultView());
+		window.draw(text);
 		window.display();
+
+		const auto now = Clock::now();
+
+		if (std::chrono::duration_cast<std::chrono::seconds>(now - begin).count() >= 1)
+		{
+			char buffer [64];
+			snprintf(buffer,sizeof(buffer),"FPS %d (%.3fms)", frameCount, averageFrameTime.count() / frameCount);
+			text.setString(buffer);
+
+			frameCount = 0;
+			averageFrameTime = std::chrono::duration<double, std::milli>::zero();
+			begin = now;
+		}
+
+		frameTimeEnd = now;
+		averageFrameTime += frameTimeEnd - frameTimeBegin;
+		frameTimeBegin = frameTimeEnd;
 	}
 
 	return 0;
