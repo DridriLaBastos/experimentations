@@ -73,27 +73,8 @@ int main(int argc, char const *argv[])
 	text.setCharacterSize(15);
 	text.setFillColor(sf::Color::Red);
 
-	// PutRectangle(renderData, 0, 100, 100, 100, Colors::Green);
-	// PutRectangle(renderData, 0, 200, 100, 100, Colors::Blue);
-
-	Color color = Colors::Black;
-
-	PutRectangle(renderData, 0, 0, renderData.width, renderData.height, Colors::LightGray);
-
-	sf::View mainCamera (window.getView());
-	window.setView(mainCamera);
-
-	sf::Texture particleTexture(RESOURCE_PATH("textures/particle.jpeg"));
-
-	constexpr unsigned int N = 50000;
-	std::vector<sf::Sprite> particleSprites (N, sf::Sprite(particleTexture));
-
-	for (size_t i = 0; i < N; i+=1)
-	{
-		const unsigned int x = i % (window.getSize().x/2);
-		const unsigned int y = i / window.getSize().y;
-		particleSprites[i].setPosition({(float)x,(float)y});
-	}
+	sf::Texture texture (RESOURCE_PATH("textures/particle.png"));
+	sf::Sprite sprite(texture);
 
 	auto frameTimeBegin = Clock::now();
 	auto frameTimeEnd = Clock::now();
