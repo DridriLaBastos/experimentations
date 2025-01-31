@@ -28,16 +28,18 @@ int main(int argc, char const *argv[])
 	auto frameTimeBegin = Clock::now();
 	auto frameTimeEnd = Clock::now();
 	auto begin = Clock::now();
-	auto lastEvent = Clock::now();
 	unsigned int frameCount = 0;
-	std::chrono::duration<double,std::milli> averageFrameTime (0);
-	std::chrono::duration<double> currentFrameTime (0);
+	std::chrono::duration<float,std::milli> averageFrameTime (0);
+	std::chrono::duration<float> currentFrameTime (0);
 
 	float zoomAccelerationFactor = 300.0;
 	float zoomAcceleration = 0;
 	float zoomVelocity = 0.0;
 	float maxZoomVelocity = 500.0;
-	float zoomAttenuation = 0.2;
+
+	float cameraAccelerationFactor = 300.0;
+	sf::Vector2f cameraAcceleration;
+	sf::Vector2f cameraVelocity;
 
 	while (window.isOpen())
 	{
@@ -49,19 +51,42 @@ int main(int argc, char const *argv[])
 			{
 				window.close();
 			}
-			else if (auto* key = event->getIf<sf::Event::KeyPressed>()) {
-				switch (key->code) {
-					case sf::Keyboard::Key::A:
-						zoomAcceleration = zoomAccelerationFactor;
-					break;
-
-					case sf::Keyboard::Key::E:
-						zoomAcceleration = -zoomAccelerationFactor;
-					break;
-
-					default:
-						break;
+			else if (auto* key = event->getIf<sf::Event::KeyPressed>())
+			{
+				float newZoomAcceleration = 0;
+				sf::Vector2f newCameraAcceleration;
+				if (key->code == sf::Keyboard::Key::A)
+				{
+					newZoomAcceleration += zoomAccelerationFactor;
 				}
+
+				if (key->code == sf::Keyboard::Key::E)
+				{
+					newZoomAcceleration -= zoomAccelerationFactor;
+				}
+
+				if (key->code == sf::Keyboard::Key::Z)
+				{
+					newCameraAcceleration.y -= cameraAccelerationFactor;
+				}
+
+				if (key->code == sf::Keyboard::Key::S)
+				{
+					newCameraAcceleration.y += cameraAccelerationFactor;
+				}
+
+				if (key->code == sf::Keyboard::Key::D)
+				{
+					newCameraAcceleration.x += cameraAccelerationFactor;
+				}
+
+				if (key->code == sf::Keyboard::Key::Q)
+				{
+					newCameraAcceleration.x -= cameraAccelerationFactor;
+				}
+
+				zoomAcceleration = newZoomAcceleration;
+				cameraAcceleration = newCameraAcceleration;
 			}
 			else if (auto* key = event->getIf<sf::Event::KeyReleased>())
 			{
@@ -70,6 +95,16 @@ int main(int argc, char const *argv[])
 					case sf::Keyboard::Key::A:
 					case sf::Keyboard::Key::E:
 						zoomAcceleration = 0;
+					break;
+
+					case sf::Keyboard::Key::Z:
+					case sf::Keyboard::Key::S:
+						cameraAcceleration.y = 0;
+					break;
+
+					case sf::Keyboard::Key::Q:
+					case sf::Keyboard::Key::D:
+						cameraAcceleration.x = 0;
 					break;
 
 					default:
@@ -94,7 +129,11 @@ int main(int argc, char const *argv[])
 		if (attenuateZoom)
 			zoomVelocity += -zoomVelocity*5*currentFrameTime.count();
 
-		printf("Zoom Velocity: %.3f\n", zoomVelocity);
+		cameraVelocity += cameraAcceleration*currentFrameTime.count();
+		mainCamera.move(cameraVelocity*currentFrameTime.count());
+
+		if (cameraAcceleration.lengthSquared() <= cameraAccelerationFactor)
+			cameraVelocity += -cameraVelocity * 5.f * currentFrameTime.count();
 
 		window.clear(sf::Color::Magenta);
 		window.setView(mainCamera);
