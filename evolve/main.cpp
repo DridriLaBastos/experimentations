@@ -1,4 +1,5 @@
 #include <iostream>
+#include <thread>
 
 #include "SFML/Graphics.hpp"
 
@@ -8,11 +9,16 @@ constexpr unsigned int WINDOW_HEIGHT = 600;
 #define RESOURCE_PATH(path) RESOURCE_FOLDER "/" path
 
 using Clock = std::chrono::high_resolution_clock;
+using MilliSeconds = std::chrono::duration<float, std::milli>;
+using Seconds      = std::chrono::duration<float>;
+
+static constexpr float TARGET_FPS = 120.0f;
+static constexpr Seconds SEC_PER_FRAME (1.0f/TARGET_FPS);
 
 int main(int argc, char const *argv[])
 {
 	sf::RenderWindow window(sf::VideoMode({720,480}),"Evolve");
-	window.setFramerateLimit(60);
+	window.setFramerateLimit(TARGET_FPS);
 
 	sf::View mainCamera = window.getDefaultView();
 
@@ -27,10 +33,10 @@ int main(int argc, char const *argv[])
 
 	auto frameTimeBegin = Clock::now();
 	auto frameTimeEnd = Clock::now();
-	auto begin = Clock::now();
 	unsigned int frameCount = 0;
-	std::chrono::duration<float,std::milli> averageFrameTime (0);
-	std::chrono::duration<float> currentFrameTime (0);
+	unsigned int eventTicks = 0;
+	Seconds timeSinceLastFrame (0);
+	Seconds elapsedTime (0);
 
 	float zoomAccelerationFactor = 300.0;
 	float zoomAcceleration = 0;
@@ -43,8 +49,7 @@ int main(int argc, char const *argv[])
 
 	while (window.isOpen())
 	{
-		frameCount += 1;
-		const auto now = Clock::now();
+		eventTicks += 1;
 		while (const std::optional event = window.pollEvent())
 		{
 			if (event->is<sf::Event::Closed>())
@@ -113,27 +118,44 @@ int main(int argc, char const *argv[])
 			}
 		}
 
-		zoomVelocity = std::min(zoomVelocity,maxZoomVelocity);
+		while (timeSinceLastFrame >= Seconds(1))
+		{
+			frameCount += 1;
 
-		sf::Vector2f mainCameraSize = mainCamera.getSize();
-		zoomVelocity += zoomAcceleration * currentFrameTime.count();
-		mainCameraSize.x += zoomVelocity * currentFrameTime.count();
-		mainCameraSize.y += zoomVelocity * currentFrameTime.count();
-		mainCamera.setSize(mainCameraSize);
+			sf::Vector2f mainCameraSize = mainCamera.getSize();
+			zoomVelocity += zoomAcceleration * SEC_PER_FRAME.count();
+			mainCameraSize.x += zoomVelocity * SEC_PER_FRAME.count();
+			mainCameraSize.y += zoomVelocity * SEC_PER_FRAME.count();
+			mainCamera.setSize(mainCameraSize);
 
-		//If the sign are opposed, then the acceleration is against the movement and we want to attenuate the zoom
-		const bool accelerationOpposed = (zoomAcceleration / zoomVelocity) < 0;
-		const bool notAccelerating = std::abs(zoomAcceleration) < 0.01;
-		const bool attenuateZoom = accelerationOpposed || notAccelerating;
+			//If the sign are opposed, then the acceleration is against the movement and we want to attenuate the zoom
+			const bool accelerationOpposed = (zoomAcceleration / zoomVelocity) < 0;
+			const bool notAccelerating = std::abs(zoomAcceleration) < 0.01;
+			const bool attenuateZoom = accelerationOpposed || notAccelerating;
 
-		if (attenuateZoom)
-			zoomVelocity += -zoomVelocity*5*currentFrameTime.count();
+			if (attenuateZoom)
+				zoomVelocity += -zoomVelocity*5*SEC_PER_FRAME.count();
 
-		cameraVelocity += cameraAcceleration*currentFrameTime.count();
-		mainCamera.move(cameraVelocity*currentFrameTime.count());
+			cameraVelocity += cameraAcceleration*SEC_PER_FRAME.count();
+			mainCamera.move(cameraVelocity*SEC_PER_FRAME.count());
 
-		if (cameraAcceleration.lengthSquared() <= cameraAccelerationFactor)
-			cameraVelocity += -cameraVelocity * 5.f * currentFrameTime.count();
+			if (cameraAcceleration.lengthSquared() <= cameraAccelerationFactor)
+				cameraVelocity += -cameraVelocity * 5.f * SEC_PER_FRAME.count();
+
+			timeSinceLastFrame -= SEC_PER_FRAME;
+		}
+
+		if (elapsedTime > Seconds(1))
+		{
+			char buffer [64];
+			const float averageFrameTime = elapsedTime.count() / static_cast<float>(frameCount);
+			snprintf(buffer,sizeof(buffer),"FPS %d (%.3fms)\nEvent ticks : %d", frameCount, averageFrameTime*1000.0f,eventTicks);
+			text.setString(buffer);
+
+			frameCount = 0;
+			eventTicks = 0;
+			elapsedTime -= Seconds(1);
+		}
 
 		window.clear(sf::Color::Magenta);
 		window.setView(mainCamera);
@@ -142,20 +164,10 @@ int main(int argc, char const *argv[])
 		window.draw(text);
 		window.display();
 
-		if (std::chrono::duration_cast<std::chrono::seconds>(now - begin).count() >= 1)
-		{
-			char buffer [64];
-			snprintf(buffer,sizeof(buffer),"FPS %d (%.3fms)", frameCount, averageFrameTime.count() / frameCount);
-			text.setString(buffer);
-
-			frameCount = 0;
-			averageFrameTime = std::chrono::duration<double, std::milli>::zero();
-			begin = now;
-		}
-
-		frameTimeEnd = now;
-		currentFrameTime = frameTimeEnd - frameTimeBegin;
-		averageFrameTime += currentFrameTime;
+		frameTimeEnd = Clock::now();
+		MilliSeconds loopTime = frameTimeEnd - frameTimeBegin;
+		timeSinceLastFrame += loopTime;
+		elapsedTime += loopTime;
 		frameTimeBegin = frameTimeEnd;
 	}
 
