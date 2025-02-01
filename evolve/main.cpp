@@ -1,6 +1,7 @@
-#include <iostream>
 #include <thread>
+#include <iostream>
 
+#include "box2d/box2d.h"
 #include "SFML/Graphics.hpp"
 
 constexpr unsigned int WINDOW_WIDTH = 800;
@@ -12,13 +13,17 @@ using Clock = std::chrono::high_resolution_clock;
 using MilliSeconds = std::chrono::duration<float, std::milli>;
 using Seconds      = std::chrono::duration<float>;
 
-static constexpr float TARGET_FPS = 120.0f;
+static constexpr float TARGET_FPS = 30.0;
+static constexpr float TARGET_TPS = 45.0;
+static constexpr unsigned int PHYSIC_SOLVER_SUB_STEPS = 6;
+
 static constexpr Seconds SEC_PER_FRAME (1.0f/TARGET_FPS);
+static constexpr Seconds SEC_PER_TICK (1.0/TARGET_TPS);
+static constexpr Seconds GAME_LOOP_SLEEP = std::min(SEC_PER_FRAME,SEC_PER_TICK);
 
 int main(int argc, char const *argv[])
 {
 	sf::RenderWindow window(sf::VideoMode({720,480}),"Evolve");
-	window.setFramerateLimit(TARGET_FPS);
 
 	sf::View mainCamera = window.getDefaultView();
 
@@ -34,8 +39,9 @@ int main(int argc, char const *argv[])
 	auto frameTimeBegin = Clock::now();
 	auto frameTimeEnd = Clock::now();
 	unsigned int frameCount = 0;
-	unsigned int eventTicks = 0;
+	unsigned int tickCount = 0;
 	Seconds timeSinceLastFrame (0);
+	Seconds timeSinceLastUpdate (0);
 	Seconds elapsedTime (0);
 
 	float zoomAccelerationFactor = 300.0;
@@ -47,9 +53,12 @@ int main(int argc, char const *argv[])
 	sf::Vector2f cameraAcceleration;
 	sf::Vector2f cameraVelocity;
 
+	b2WorldDef wordlDef = b2DefaultWorldDef();
+	wordlDef.gravity = { 0.f,  0.f };
+	b2WorldId worldId = b2CreateWorld(&wordlDef);
+
 	while (window.isOpen())
 	{
-		eventTicks += 1;
 		while (const std::optional event = window.pollEvent())
 		{
 			if (event->is<sf::Event::Closed>())
@@ -118,10 +127,23 @@ int main(int argc, char const *argv[])
 			}
 		}
 
-		while (timeSinceLastFrame >= Seconds(1))
+		while (timeSinceLastFrame >= SEC_PER_FRAME)
 		{
 			frameCount += 1;
 
+			window.clear(sf::Color::Magenta);
+			window.setView(mainCamera);
+			window.draw(sprite);
+			window.setView(window.getDefaultView());
+			window.draw(text);
+			window.display();
+
+			timeSinceLastFrame -= SEC_PER_FRAME;
+		}
+
+		while (timeSinceLastUpdate >= SEC_PER_TICK)
+		{
+			tickCount += 1;
 			sf::Vector2f mainCameraSize = mainCamera.getSize();
 			zoomVelocity += zoomAcceleration * SEC_PER_FRAME.count();
 			mainCameraSize.x += zoomVelocity * SEC_PER_FRAME.count();
@@ -142,33 +164,30 @@ int main(int argc, char const *argv[])
 			if (cameraAcceleration.lengthSquared() <= cameraAccelerationFactor)
 				cameraVelocity += -cameraVelocity * 5.f * SEC_PER_FRAME.count();
 
-			timeSinceLastFrame -= SEC_PER_FRAME;
+			b2World_Step(worldId,SEC_PER_TICK.count(),4);
+			timeSinceLastUpdate -= SEC_PER_TICK;
 		}
 
 		if (elapsedTime > Seconds(1))
 		{
 			char buffer [64];
 			const float averageFrameTime = elapsedTime.count() / static_cast<float>(frameCount);
-			snprintf(buffer,sizeof(buffer),"FPS %d (%.3fms)\nEvent ticks : %d", frameCount, averageFrameTime*1000.0f,eventTicks);
+			snprintf(buffer,sizeof(buffer),"FPS %d (%.3fms)\nGame tick : %d", frameCount, averageFrameTime*1000.0f,tickCount);
 			text.setString(buffer);
 
 			frameCount = 0;
-			eventTicks = 0;
+			tickCount = 0;
 			elapsedTime -= Seconds(1);
 		}
-
-		window.clear(sf::Color::Magenta);
-		window.setView(mainCamera);
-		window.draw(sprite);
-		window.setView(window.getDefaultView());
-		window.draw(text);
-		window.display();
 
 		frameTimeEnd = Clock::now();
 		MilliSeconds loopTime = frameTimeEnd - frameTimeBegin;
 		timeSinceLastFrame += loopTime;
+		timeSinceLastUpdate += loopTime;
 		elapsedTime += loopTime;
 		frameTimeBegin = frameTimeEnd;
+
+		std::this_thread::sleep_for(GAME_LOOP_SLEEP);
 	}
 
 	return 0;
