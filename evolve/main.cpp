@@ -15,6 +15,7 @@ using Seconds      = std::chrono::duration<float>;
 
 static constexpr float TARGET_FPS = 30.0;
 static constexpr float TARGET_TPS = 45.0;
+static constexpr float PIXEL_PER_METTER = 10.0;
 static constexpr unsigned int PHYSIC_SOLVER_SUB_STEPS = 6;
 
 static constexpr Seconds SEC_PER_FRAME (1.0f/TARGET_FPS);
@@ -53,9 +54,26 @@ int main(int argc, char const *argv[])
 	sf::Vector2f cameraAcceleration;
 	sf::Vector2f cameraVelocity;
 
+	b2Version version = b2GetVersion();
+	printf("*** BOX2D Version : %d.%d.%d ***\n",version.major,version.minor,version.revision);
+
 	b2WorldDef wordlDef = b2DefaultWorldDef();
 	wordlDef.gravity = { 0.f,  0.f };
 	b2WorldId worldId = b2CreateWorld(&wordlDef);
+
+	//I apply the pixel per mettre when defining the forces so that I don't have to multiply all the value given by 
+	// Box2d when setting the position of the sprite.
+	b2BodyDef bodyDef = b2DefaultBodyDef();
+	bodyDef.type = b2_dynamicBody;
+	bodyDef.position = { sprite.getPosition().x, sprite.getPosition().y };
+	bodyDef.linearVelocity = { .0f, PIXEL_PER_METTER };
+	b2BodyId bodyId = b2CreateBody(worldId,&bodyDef);
+
+	b2Polygon dynamicCircle = b2MakeRoundedBox(1.0,1.0,1.0);
+	b2ShapeDef defaultShapeDef = b2DefaultShapeDef();
+	defaultShapeDef.density = 1.0;
+	defaultShapeDef.friction = 0;
+	b2ShapeId shapeId = b2CreatePolygonShape(bodyId,&defaultShapeDef,&dynamicCircle);
 
 	while (window.isOpen())
 	{
@@ -165,6 +183,10 @@ int main(int argc, char const *argv[])
 				cameraVelocity += -cameraVelocity * 5.f * SEC_PER_FRAME.count();
 
 			b2World_Step(worldId,SEC_PER_TICK.count(),4);
+
+			b2Vec2 newPosition = b2Body_GetPosition(bodyId);
+			
+			sprite.setPosition({newPosition.x,newPosition.y});
 			timeSinceLastUpdate -= SEC_PER_TICK;
 		}
 
@@ -190,5 +212,6 @@ int main(int argc, char const *argv[])
 		std::this_thread::sleep_for(GAME_LOOP_SLEEP);
 	}
 
+	b2DestroyWorld(worldId);
 	return 0;
 }
