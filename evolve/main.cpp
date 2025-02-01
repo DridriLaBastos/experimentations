@@ -3,6 +3,7 @@
 
 #include "box2d/box2d.h"
 #include "SFML/Graphics.hpp"
+#include "FastNoise/FastNoise.h"
 
 constexpr unsigned int WINDOW_WIDTH = 800;
 constexpr unsigned int WINDOW_HEIGHT = 600;
@@ -15,7 +16,7 @@ using Seconds      = std::chrono::duration<float>;
 
 static constexpr float TARGET_FPS = 30.0;
 static constexpr float TARGET_TPS = 45.0;
-static constexpr float PIXEL_PER_METTER = 10.0;
+static constexpr float PIXEL_PER_METER = 100.0;
 static constexpr unsigned int PHYSIC_SOLVER_SUB_STEPS = 6;
 
 static constexpr Seconds SEC_PER_FRAME (1.0f/TARGET_FPS);
@@ -66,7 +67,7 @@ int main(int argc, char const *argv[])
 	b2BodyDef bodyDef = b2DefaultBodyDef();
 	bodyDef.type = b2_dynamicBody;
 	bodyDef.position = { sprite.getPosition().x, sprite.getPosition().y };
-	bodyDef.linearVelocity = { .0f, PIXEL_PER_METTER };
+	bodyDef.linearVelocity = { .0f, PIXEL_PER_METER };
 	b2BodyId bodyId = b2CreateBody(worldId,&bodyDef);
 
 	b2Polygon dynamicCircle = b2MakeRoundedBox(1.0,1.0,1.0);
@@ -74,6 +75,25 @@ int main(int argc, char const *argv[])
 	defaultShapeDef.density = 1.0;
 	defaultShapeDef.friction = 0;
 	b2ShapeId shapeId = b2CreatePolygonShape(bodyId,&defaultShapeDef,&dynamicCircle);
+
+	std::vector<float> noiseOutput (1000.0*1000.0);
+	auto perlinNoiseGenerator = FastNoise::New<FastNoise::Perlin>();
+	perlinNoiseGenerator->GenUniformGrid2D(noiseOutput.data(),0,0,1000,1000,20,0xABBA123);
+
+	std::vector<sf::Color> colorNoiseOutput (noiseOutput.size());
+
+	for (size_t i = 0; i < noiseOutput.size(); i += 1)
+	{
+		const float n = noiseOutput[i];
+		const uint8_t colorValue = 255.0 * n;
+		colorNoiseOutput[i] = sf::Color(colorValue,colorValue,colorValue);
+	}
+
+	sf::Texture groundTexture ({1000,1000});
+	groundTexture.update((const uint8_t*)colorNoiseOutput.data());
+	sf::Sprite groundSprite (groundTexture);
+	groundSprite.setScale({PIXEL_PER_METER,PIXEL_PER_METER});
+
 
 	while (window.isOpen())
 	{
@@ -151,6 +171,7 @@ int main(int argc, char const *argv[])
 
 			window.clear(sf::Color::Magenta);
 			window.setView(mainCamera);
+			window.draw(groundSprite);
 			window.draw(sprite);
 			window.setView(window.getDefaultView());
 			window.draw(text);
