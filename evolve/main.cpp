@@ -16,12 +16,16 @@ using Seconds      = std::chrono::duration<float>;
 
 static constexpr float TARGET_FPS = 30.0;
 static constexpr float TARGET_TPS = 45.0;
-static constexpr float PIXEL_PER_METER = 100.0;
+static constexpr float PIXEL_PER_METER = 10.0;
 static constexpr unsigned int PHYSIC_SOLVER_SUB_STEPS = 6;
 
 static constexpr Seconds SEC_PER_FRAME (1.0f/TARGET_FPS);
 static constexpr Seconds SEC_PER_TICK (1.0/TARGET_TPS);
 static constexpr Seconds GAME_LOOP_SLEEP = std::min(SEC_PER_FRAME,SEC_PER_TICK);
+
+float MapValue(float n, float min, float max, float a, float b) {
+    return a + ((n - min) * (b - a)) / (max - min);
+}
 
 int main(int argc, char const *argv[])
 {
@@ -77,23 +81,36 @@ int main(int argc, char const *argv[])
 	b2ShapeId shapeId = b2CreatePolygonShape(bodyId,&defaultShapeDef,&dynamicCircle);
 
 	std::vector<float> noiseOutput (1000.0*1000.0);
-	auto perlinNoiseGenerator = FastNoise::New<FastNoise::Perlin>();
-	perlinNoiseGenerator->GenUniformGrid2D(noiseOutput.data(),0,0,1000,1000,20,0xABBA123);
+	auto node = FastNoise::New<FastNoise::Perlin>();
+	auto output = node->GenUniformGrid2D(noiseOutput.data(),0,0,1000,1000,0.01,19061996);
 
 	std::vector<sf::Color> colorNoiseOutput (noiseOutput.size());
 
 	for (size_t i = 0; i < noiseOutput.size(); i += 1)
 	{
 		const float n = noiseOutput[i];
-		const uint8_t colorValue = 255.0 * n;
-		colorNoiseOutput[i] = sf::Color(colorValue,colorValue,colorValue);
+		sf::Color groundColor = sf::Color::Blue;
+
+		if (n >= 0.9) {
+			groundColor = sf::Color::White;
+		}
+		else if (n >= 0.7) {
+			groundColor = sf::Color::Black;
+		}
+		else if (n >= -0.1) {
+			groundColor = sf::Color::Green;
+		}
+		else if (n >= -0.4) {
+			groundColor = sf::Color::Yellow;
+		}
+		const uint8_t colorValue = MapValue(n,output.min,output.max,0,255);
+		colorNoiseOutput[i] = groundColor;
 	}
 
-	sf::Texture groundTexture ({1000,1000});
+	sf::Texture groundTexture (sf::Vector2u{1000,1000});
 	groundTexture.update((const uint8_t*)colorNoiseOutput.data());
 	sf::Sprite groundSprite (groundTexture);
 	groundSprite.setScale({PIXEL_PER_METER,PIXEL_PER_METER});
-
 
 	while (window.isOpen())
 	{
