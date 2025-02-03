@@ -18,7 +18,14 @@ FetchContent_Declare(FastNoiseSIMD2
 
 FetchContent_MakeAvailable(FastNoiseSIMD2)
 
-add_executable(evolve main.cpp)
+add_executable(evolve main.cpp
+		scene/entt/entt.hpp
+		scene/Scene.hpp
+		src/Scene.cpp
+		scene/SpriteComponent.hpp
+        src/SpriteComponent.cpp
+		scene/PhysicComponent.hpp)
 
 target_link_libraries(evolve PRIVATE box2d sfml-graphics FastNoise2)
 target_compile_definitions(evolve PRIVATE RESOURCE_FOLDER="${CMAKE_CURRENT_SOURCE_DIR}/resources")
+target_include_directories(evolve PRIVATE ${PROJECT_SOURCE_DIR})

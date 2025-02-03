@@ -1,6 +1,9 @@
 #include <thread>
 #include <iostream>
 
+#include "scene/Scene.hpp"
+#include "scene/SpriteComponent.hpp"
+
 #include "box2d/box2d.h"
 #include "SFML/Graphics.hpp"
 #include "FastNoise/FastNoise.h"
@@ -112,6 +115,12 @@ int main(int argc, char const *argv[])
 	sf::Sprite groundSprite (groundTexture);
 	groundSprite.setScale({PIXEL_PER_METER,PIXEL_PER_METER});
 
+	Scene s;
+	auto s1 = s.Add<SpriteComponent>(SpriteComponent(texture));
+	auto s2 = s.Add<SpriteComponent>(SpriteComponent(texture));
+
+	s.mRegistry.get<SpriteComponent>(s1).mSprite.setPosition({300,300});
+
 	while (window.isOpen())
 	{
 		while (const std::optional event = window.pollEvent())
@@ -188,8 +197,16 @@ int main(int argc, char const *argv[])
 
 			window.clear(sf::Color::Magenta);
 			window.setView(mainCamera);
-			window.draw(groundSprite);
-			window.draw(sprite);
+
+			auto spriteEntities = s.mRegistry.view<SpriteComponent>();
+			unsigned int i = 0;
+			for (auto spriteEntity : spriteEntities)
+			{
+				SpriteComponent& component = s.mRegistry.get<SpriteComponent>(spriteEntity);
+				printf("%d  %.3f %.3f\n",i++,component.mSprite.getPosition().x,component.mSprite.getPosition().x);
+				window.draw(s.mRegistry.get<SpriteComponent>(spriteEntity).mSprite);
+			}
+
 			window.setView(window.getDefaultView());
 			window.draw(text);
 			window.display();
