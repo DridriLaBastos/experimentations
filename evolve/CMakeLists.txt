@@ -24,7 +24,9 @@ add_executable(evolve main.cpp
 		src/Scene.cpp
 		scene/SpriteComponent.hpp
         src/SpriteComponent.cpp
-		scene/PhysicComponent.hpp)
+		scene/PhysicComponent.hpp
+		scene/SceneEntity.hpp
+		src/SceneEntity.cpp)
 
 target_link_libraries(evolve PRIVATE box2d sfml-graphics FastNoise2)
 target_compile_definitions(evolve PRIVATE RESOURCE_FOLDER="${CMAKE_CURRENT_SOURCE_DIR}/resources")
