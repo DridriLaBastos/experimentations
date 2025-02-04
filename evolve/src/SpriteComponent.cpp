@@ -3,7 +3,7 @@
 //
 #include "scene/SpriteComponent.hpp"
 
-SpriteComponent::SpriteComponent(sf::Texture &texture): mSprite(texture)
+SpriteComponent::SpriteComponent(sf::Texture &texture): sprite(texture)
 {
 
 }
