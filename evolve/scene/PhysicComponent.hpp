@@ -7,8 +7,10 @@
 
 #include "box2d/box2d.h"
 
-class PhysicComponent
+struct PhysicComponent
 {
+	PhysicComponent(b2BodyId id): bodyId(id) {}
+	b2BodyId bodyId;
 };
 
 #endif //PHYSICCOMPONENT_HPP

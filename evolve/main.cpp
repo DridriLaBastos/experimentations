@@ -78,6 +78,8 @@ int main(int argc, char const *argv[])
 	bodyDef.linearVelocity = { .0f, PIXEL_PER_METER };
 	b2BodyId bodyId = b2CreateBody(worldId,&bodyDef);
 
+	b2Body_ApplyTorque(bodyId,60.0,true);
+
 	b2Polygon dynamicCircle = b2MakeRoundedBox(1.0,1.0,1.0);
 	b2ShapeDef defaultShapeDef = b2DefaultShapeDef();
 	defaultShapeDef.density = 1.0;
@@ -119,7 +121,7 @@ int main(int argc, char const *argv[])
 	Scene s;
 	auto spriteEntity1 = s.SpawnEntity();
 	spriteEntity1.AddComponent<SpriteComponent>(texture);
-	spriteEntity1.AddComponent<PhysicComponent>();
+	spriteEntity1.AddComponent<PhysicComponent>(bodyId);
 
 	auto spriteEntity2 = s.SpawnEntity();
 	spriteEntity2.AddComponent<SpriteComponent>(texture);
@@ -204,6 +206,22 @@ int main(int argc, char const *argv[])
 			window.clear(sf::Color::Magenta);
 			window.setView(mainCamera);
 
+			//TODO: Optimize access to Box2D simulation objects using the thing that I forget but you know what I mean
+			//Update the rendering components that have a physic simulation attached to it
+			auto physicSpriteView = s.mRegistry.view<SpriteComponent, PhysicComponent>();
+			for (auto& entity : physicSpriteView)
+			{
+				auto [spriteComponent,physicComponent] = physicSpriteView.get<SpriteComponent,PhysicComponent>(entity);
+
+				b2Vec2 position = b2Body_GetPosition(physicComponent.bodyId);
+				b2Rot rotation  = b2Body_GetRotation(physicComponent.bodyId);
+
+				spriteComponent.sprite.setPosition({position.x,position.y});
+				spriteComponent.sprite.setRotation( sf::radians(b2Rot_GetAngle(rotation)));
+			}
+
+			//TODO: Can I make an optimization here by querying only the components not in the preview view
+			//		and grouping them in a adjacent structures ?
 			auto spriteEntities = s.mRegistry.view<SpriteComponent>();
 			unsigned int i = 0;
 			for (auto spriteEntity : spriteEntities)
