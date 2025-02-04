@@ -6,18 +6,12 @@
 #define WORLD_HPP
 
 #include "entt/entt.hpp"
+#include "SceneEntity.hpp"
 
 class Scene
 {
 public:
-	template<class ComponentType>
-	entt::entity Add(ComponentType&& component)
-	{
-		entt::entity entity = mRegistry.create();
-		mRegistry.emplace<ComponentType>(entity, std::forward<ComponentType&&>(component));
-		return entity;
-	}
-
+	SceneEntity SpawnEntity ();
 	entt::registry mRegistry;
 };
 

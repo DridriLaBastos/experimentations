@@ -7,6 +7,7 @@
 #include "box2d/box2d.h"
 #include "SFML/Graphics.hpp"
 #include "FastNoise/FastNoise.h"
+#include "scene/PhysicComponent.hpp"
 
 constexpr unsigned int WINDOW_WIDTH = 800;
 constexpr unsigned int WINDOW_HEIGHT = 600;
@@ -116,10 +117,15 @@ int main(int argc, char const *argv[])
 	groundSprite.setScale({PIXEL_PER_METER,PIXEL_PER_METER});
 
 	Scene s;
-	auto s1 = s.Add<SpriteComponent>(SpriteComponent(texture));
-	auto s2 = s.Add<SpriteComponent>(SpriteComponent(texture));
+	auto spriteEntity1 = s.SpawnEntity();
+	spriteEntity1.AddComponent<SpriteComponent>(texture);
+	spriteEntity1.AddComponent<PhysicComponent>();
 
-	s.mRegistry.get<SpriteComponent>(s1).mSprite.setPosition({300,300});
+	auto spriteEntity2 = s.SpawnEntity();
+	spriteEntity2.AddComponent<SpriteComponent>(texture);
+
+	auto& spriteComponent = spriteEntity2.GetComponent<SpriteComponent>();
+	spriteComponent.sprite.setPosition({300,300});
 
 	while (window.isOpen())
 	{
@@ -202,9 +208,8 @@ int main(int argc, char const *argv[])
 			unsigned int i = 0;
 			for (auto spriteEntity : spriteEntities)
 			{
-				SpriteComponent& component = s.mRegistry.get<SpriteComponent>(spriteEntity);
-				printf("%d  %.3f %.3f\n",i++,component.mSprite.getPosition().x,component.mSprite.getPosition().x);
-				window.draw(s.mRegistry.get<SpriteComponent>(spriteEntity).mSprite);
+				SpriteComponent& spriteComponent = s.mRegistry.get<SpriteComponent>(spriteEntity);
+				window.draw(static_cast<sf::Sprite>(spriteComponent));
 			}
 
 			window.setView(window.getDefaultView());
