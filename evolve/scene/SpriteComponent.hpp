@@ -10,7 +10,9 @@
 struct SpriteComponent
 {
 	SpriteComponent(sf::Texture& texture);
-	sf::Sprite mSprite;
+	sf::Sprite sprite;
+
+	explicit operator sf::Sprite() const{ return sprite; }
 };
 
 #endif Component//COMPONENT_HPP
