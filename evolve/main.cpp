@@ -44,7 +44,6 @@ int main(int argc, char const *argv[])
 	text.setFillColor(sf::Color::Red);
 
 	sf::Texture texture (RESOURCE_PATH("textures/particle.png"));
-	sf::Sprite sprite(texture);
 
 	auto frameTimeBegin = Clock::now();
 	auto frameTimeEnd = Clock::now();
@@ -74,17 +73,17 @@ int main(int argc, char const *argv[])
 	// Box2d when setting the position of the sprite.
 	b2BodyDef bodyDef = b2DefaultBodyDef();
 	bodyDef.type = b2_dynamicBody;
-	bodyDef.position = { sprite.getPosition().x, sprite.getPosition().y };
-	bodyDef.linearVelocity = { .0f, PIXEL_PER_METER };
 	b2BodyId bodyId = b2CreateBody(worldId,&bodyDef);
 
-	b2Body_ApplyTorque(bodyId,60.0,true);
+	b2Body_ApplyTorque(bodyId,60,true);
 
-	b2Polygon dynamicCircle = b2MakeRoundedBox(1.0,1.0,1.0);
-	b2ShapeDef defaultShapeDef = b2DefaultShapeDef();
-	defaultShapeDef.density = 1.0;
-	defaultShapeDef.friction = 0;
-	b2ShapeId shapeId = b2CreatePolygonShape(bodyId,&defaultShapeDef,&dynamicCircle);
+	b2Circle circleShape;
+	circleShape.center = {0,0};
+	circleShape.radius = 0.4;
+	b2ShapeDef shapeDef = b2DefaultShapeDef();
+	shapeDef.density = 1.0;
+	shapeDef.friction = 0;
+	b2ShapeId shapeId = b2CreateCircleShape(bodyId,&shapeDef,&circleShape);
 
 	std::vector<float> noiseOutput (1000.0*1000.0);
 	auto node = FastNoise::New<FastNoise::Perlin>();
@@ -115,19 +114,27 @@ int main(int argc, char const *argv[])
 
 	sf::Texture groundTexture (sf::Vector2u{1000,1000});
 	groundTexture.update((const uint8_t*)colorNoiseOutput.data());
-	sf::Sprite groundSprite (groundTexture);
-	groundSprite.setScale({PIXEL_PER_METER,PIXEL_PER_METER});
 
 	Scene s;
 	auto spriteEntity1 = s.SpawnEntity();
-	spriteEntity1.AddComponent<SpriteComponent>(texture);
 	spriteEntity1.AddComponent<PhysicComponent>(bodyId);
+	sf::Sprite& e1Sprite = spriteEntity1.AddComponent<SpriteComponent>(texture).sprite;
+	e1Sprite.setOrigin({texture.getSize().x/2.f,texture.getSize().y/2.f});
+	e1Sprite.setPosition({100,100});
+
+	float scaleFactore = (0.4 * PIXEL_PER_METER)/texture.getSize().x;
+
+	e1Sprite.setScale({scaleFactore,scaleFactore});
 
 	auto spriteEntity2 = s.SpawnEntity();
 	spriteEntity2.AddComponent<SpriteComponent>(texture);
 
 	auto& spriteComponent = spriteEntity2.GetComponent<SpriteComponent>();
 	spriteComponent.sprite.setPosition({300,300});
+
+	auto groundEntity = s.SpawnEntity();
+	auto& groundSpriteComponent = groundEntity.AddComponent<SpriteComponent>(groundTexture);
+	groundSpriteComponent.sprite.setScale({PIXEL_PER_METER,PIXEL_PER_METER});
 
 	while (window.isOpen())
 	{
@@ -199,6 +206,39 @@ int main(int argc, char const *argv[])
 			}
 		}
 
+		while (timeSinceLastUpdate >= SEC_PER_TICK)
+		{
+			tickCount += 1;
+			sf::Vector2f mainCameraSize = mainCamera.getSize();
+			sf::Vector2f newCameraSize = mainCameraSize;
+			
+			zoomVelocity += zoomAcceleration * SEC_PER_FRAME.count();
+			newCameraSize.x += zoomVelocity * SEC_PER_FRAME.count();
+			newCameraSize.y += zoomVelocity * SEC_PER_FRAME.count();
+			mainCamera.zoom(newCameraSize.x/mainCameraSize.x);
+
+			//If the sign are opposed, then the acceleration is against the movement and we want to attenuate the zoom
+			const bool accelerationOpposed = (zoomAcceleration / zoomVelocity) < 0;
+			const bool notAccelerating = std::abs(zoomAcceleration) < 0.01;
+			const bool attenuateZoom = accelerationOpposed || notAccelerating;
+
+			if (attenuateZoom)
+				zoomVelocity += -zoomVelocity*5*SEC_PER_FRAME.count();
+
+			cameraVelocity += cameraAcceleration*SEC_PER_FRAME.count();
+			mainCamera.move(cameraVelocity*SEC_PER_FRAME.count());
+
+			if (cameraAcceleration.lengthSquared() <= cameraAccelerationFactor)
+				cameraVelocity += -cameraVelocity * 5.f * SEC_PER_FRAME.count();
+			
+			b2Vec2 localRightMost = b2Body_GetWorldPoint(bodyId,{0.40,0});
+			b2Vec2 force = b2MulSV(10,b2Body_GetWorldVector(bodyId,{1,0}));
+			b2Body_ApplyForce(bodyId,force,localRightMost,true);
+
+			b2World_Step(worldId,SEC_PER_TICK.count(),4);
+			timeSinceLastUpdate -= SEC_PER_TICK;
+		}
+
 		while (timeSinceLastFrame >= SEC_PER_FRAME)
 		{
 			frameCount += 1;
@@ -215,6 +255,12 @@ int main(int argc, char const *argv[])
 
 				b2Vec2 position = b2Body_GetPosition(physicComponent.bodyId);
 				b2Rot rotation  = b2Body_GetRotation(physicComponent.bodyId);
+
+				//In SFML Y axis is pointing down and 0,0 is in the top left corner
+				//In SFML rotation is toward the Y axis wich is pointing down
+				//TODO: This should be SIMD-able
+				rotation.s *= -1;
+				position.y = window.getSize().y - position.y;
 
 				spriteComponent.sprite.setPosition({position.x,position.y});
 				spriteComponent.sprite.setRotation( sf::radians(b2Rot_GetAngle(rotation)));
@@ -235,37 +281,6 @@ int main(int argc, char const *argv[])
 			window.display();
 
 			timeSinceLastFrame -= SEC_PER_FRAME;
-		}
-
-		while (timeSinceLastUpdate >= SEC_PER_TICK)
-		{
-			tickCount += 1;
-			sf::Vector2f mainCameraSize = mainCamera.getSize();
-			zoomVelocity += zoomAcceleration * SEC_PER_FRAME.count();
-			mainCameraSize.x += zoomVelocity * SEC_PER_FRAME.count();
-			mainCameraSize.y += zoomVelocity * SEC_PER_FRAME.count();
-			mainCamera.setSize(mainCameraSize);
-
-			//If the sign are opposed, then the acceleration is against the movement and we want to attenuate the zoom
-			const bool accelerationOpposed = (zoomAcceleration / zoomVelocity) < 0;
-			const bool notAccelerating = std::abs(zoomAcceleration) < 0.01;
-			const bool attenuateZoom = accelerationOpposed || notAccelerating;
-
-			if (attenuateZoom)
-				zoomVelocity += -zoomVelocity*5*SEC_PER_FRAME.count();
-
-			cameraVelocity += cameraAcceleration*SEC_PER_FRAME.count();
-			mainCamera.move(cameraVelocity*SEC_PER_FRAME.count());
-
-			if (cameraAcceleration.lengthSquared() <= cameraAccelerationFactor)
-				cameraVelocity += -cameraVelocity * 5.f * SEC_PER_FRAME.count();
-
-			b2World_Step(worldId,SEC_PER_TICK.count(),4);
-
-			b2Vec2 newPosition = b2Body_GetPosition(bodyId);
-			
-			sprite.setPosition({newPosition.x,newPosition.y});
-			timeSinceLastUpdate -= SEC_PER_TICK;
 		}
 
 		if (elapsedTime > Seconds(1))
