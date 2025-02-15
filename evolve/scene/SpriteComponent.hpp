@@ -12,7 +12,7 @@ struct SpriteComponent
 	SpriteComponent(sf::Texture& texture);
 	sf::Sprite sprite;
 
-	explicit operator sf::Sprite() const{ return sprite; }
+	explicit operator sf::Sprite () const{ return sprite; }
 };
 
 #endif Component//COMPONENT_HPP
