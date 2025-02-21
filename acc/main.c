@@ -4,17 +4,7 @@
 #include <stdlib.h>
 
 #include "log.h"
-
-typedef enum E_TOKEN_TYPE
-{
-	TOKEN_TYPE_PLUS, TOKEN_TYPE_MINUS, TOKEN_TYPE_STAR, TOKEN_TYPE_SLASH, TOKEN_TYPE_INTLIST
-} TOKEN_TYPE;
-
-struct Token
-{
-	TOKEN_TYPE type;
-	int intValue;
-};
+#include "parsing.h"
 
 int main(int argc, char const *argv[])
 {
@@ -37,9 +27,41 @@ int main(int argc, char const *argv[])
 	const int fileSizeInByte = ftell(file);
 	rewind(file);
 
-	char* fileDataBuffer = (char*)malloc(fileSizeInByte);
+	LOG_DEBUG("Compiling file '%s' [%d o]",argv[1],fileSizeInByte);
 
+	char* fileDataBuffer = (char*)malloc(fileSizeInByte);
 	fread(fileDataBuffer,fileSizeInByte,1,file);
+
+	ParsingInfo info;
+
+	Parsing_Init(fileDataBuffer,fileSizeInByte,&info);
+
+	TokenInfo token;
+
+	while (Parsing_GetNextToken(&info,&token))
+	{
+		switch (token.type)
+		{
+			case TOKEN_TYPE_PLUS:
+				LOG_DEBUG("Found token '+' at %zu:%zu [%zu]",token.line,token.column,token.size);
+				break;
+			case TOKEN_TYPE_MINUS:
+				LOG_DEBUG("Found toekn '-' at %zu:%zu [%zu]",token.line,token.column,token.size);
+				break;
+			case TOKEN_TYPE_STAR:
+				LOG_DEBUG("Found toekn '*' at %zu:%zu [%zu]",token.line,token.column,token.size);
+				break;
+			case TOKEN_TYPE_SLASH:
+				LOG_DEBUG("Found toekn '/' at %zu:%zu [%zu]",token.line,token.column,token.size);
+				break;
+			case TOKEN_TYPE_INTLIST:
+				LOG_INFO("Found a list of integers");
+				break;
+			default:
+				LOG_ERROR("Unknown token type");
+				break;
+		}
+	}
 	
 	free(fileDataBuffer);
 	fclose(file);
