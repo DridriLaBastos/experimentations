@@ -2,6 +2,7 @@
 #include <assert.h>
 #include <stdlib.h> //For NULL
 
+#include "../log.h"
 #include "../parsing.h"
 
 #define IS_MATH_OP(c) ((c == '+') || (c == '-') || (c == '*') || (c == '/'))
@@ -137,18 +138,41 @@ AstNode* Parsing_AstFeedToken(ParsingInfo* parsingInfo,TokenInfo* tokenInfo, Ast
 	{
 		newRoot = node;
 		parsingInfo->deepestSubtree = newRoot;
-	}
 
+		//In that case the syntax forces the token to be a number
+		if (tokenInfo->type != TOKEN_TYPE_INTLIST)
+		{
+			LOG_ERROR("The first expected token should be a number but got a math operator");
+			Ast_Free(node);
+			return NULL;
+		}
+	}
 	// More complex case : the node is added to the left and the rest of ast isbuild to the right
 	else
 	{
-		if (parsingInfo->deepestSubtree->left == NULL)
+		if (parsingInfo->deepestSubtree->type == NODE_TYPE_INTLIST)
 		{
-			parsingInfo->deepestSubtree->left = node;
+			AstNode* child = parsingInfo->deepestSubtree;
+			node->parent = child->parent;
+			child->parent = node;
+			node->left = child;
+
+			parsingInfo->deepestSubtree = node;
+
+			if (node->parent != NULL)
+			{
+				node->parent->right = node;
+			}
+
+			if (currentRoot == node->left)
+			{
+				newRoot = node;
+			}
 		}
 		else
 		{
 			parsingInfo->deepestSubtree->right = node;
+			node->parent = parsingInfo->deepestSubtree;
 			parsingInfo->deepestSubtree = node;
 		}
 	}

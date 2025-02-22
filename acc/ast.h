@@ -10,6 +10,7 @@ typedef struct S_AST_NODE
 {
 	AST_NODE_TYPE type;
 
+	struct S_AST_NODE* parent;
 	struct S_AST_NODE* left;
 	struct S_AST_NODE* right;
 
@@ -19,6 +20,8 @@ typedef struct S_AST_NODE
 void Ast_Free(AstNode* node);
 
 AstNode* Ast_AllocateNode(AST_NODE_TYPE type, const int intValue);
+
+void Ast_InsertLeft(AstNode* parent, AstNode* left);
 
 void Ast_Print(AstNode* root);
 

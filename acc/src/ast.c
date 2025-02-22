@@ -20,11 +20,24 @@ AstNode* Ast_AllocateNode(AST_NODE_TYPE type, const int intValue)
 {
 	AstNode* node = (AstNode*)malloc(sizeof(AstNode));
 	node->type = type;
+	node->parent = NULL;
 	node->left = NULL;
 	node->right = NULL;
 	node->intValue = intValue;
 
 	return node;
+}
+
+void Ast_InsertLeft(AstNode* parent, AstNode* left)
+{
+	parent->left = left;
+	left->parent = parent;
+}
+
+void Ast_InsertRight(AstNode* parent, AstNode* right)
+{
+	parent->right = right;
+	right->parent = parent;
 }
 
 char* GetNodeTypeDescription(AST_NODE_TYPE type)
