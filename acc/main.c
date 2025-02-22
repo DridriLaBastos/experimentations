@@ -70,6 +70,11 @@ int main(int argc, char const *argv[])
 		{
 			root = Parsing_AstFeedToken(&info,&token,root);
 		}
+
+		if (root == NULL)
+		{
+			break;
+		}
 	}
 	
 	Ast_Print(root);
