@@ -58,7 +58,7 @@ int main(int argc, char const *argv[])
 				LOG_DEBUG("Found a list of integers at %zu:%zu [%zu] : %d",token.line,token.column,token.size,token.intValue);
 				break;
 			case TOKEN_TYPE_INVALID:
-				LOG_WARN("Found an invalid token at %zu:%zu [%zu]",token.line,token.column,token.size);
+				LOG_WARN("Found an invalid token '%c' at %zu:%zu [%zu]",(char)token.intValue,token.line,token.column,token.size);
 				break;
 			default:
 				LOG_ERROR("Unknown token type");

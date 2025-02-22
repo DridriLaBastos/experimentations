@@ -66,12 +66,12 @@ bool Parsing_GetNextToken(ParsingInfo* parsingInfo, TokenInfo* tokenInfo)
 		return false;
 	}
 
-	const char current = PARSING_CURRENT_CHAR(parsingInfo);
-	MoveForward(parsingInfo);
-
 	tokenInfo->size = 1;
 	tokenInfo->column = parsingInfo->column;
 	tokenInfo->line = parsingInfo->line;
+
+	const char current = PARSING_CURRENT_CHAR(parsingInfo);
+	MoveForward(parsingInfo);
 
 	switch(current)
 	{
@@ -97,6 +97,7 @@ bool Parsing_GetNextToken(ParsingInfo* parsingInfo, TokenInfo* tokenInfo)
 			else
 			{
 				tokenInfo->type = TOKEN_TYPE_INVALID;
+				tokenInfo->intValue = current;
 			}
 		} break;
 	}
