@@ -104,7 +104,10 @@ bool Parsing_GetNextToken(ParsingInfo* parsingInfo, TokenInfo* tokenInfo)
 	{
 		tokenInfo->column = parsingInfo->column;
 		tokenInfo->line = parsingInfo->line;
-		MoveForward(parsingInfo);
+		if (!PARSING_END_OF_FILE(parsingInfo))
+		{
+			MoveForward(parsingInfo);
+		}
 	}
 
 	return tokenFound;
