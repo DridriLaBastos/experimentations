@@ -22,6 +22,7 @@ void Ast_Free(AstNode* node);
 AstNode* Ast_AllocateNode(AST_NODE_TYPE type, const int intValue);
 
 void Ast_InsertLeft(AstNode* parent, AstNode* left);
+int Ast_Evaluate(AstNode* root);
 
 void Ast_Print(AstNode* root);
 
