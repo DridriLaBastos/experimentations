@@ -93,3 +93,35 @@ void Ast_Print(AstNode* root)
 		InternalAstPrint(root,0);
 	}
 }
+
+int Ast_Evaluate(AstNode* root)
+{
+	if (root == NULL)
+	{
+		return 0;
+	}
+
+	const int leftValue = Ast_Evaluate(root->left);
+	const int rightValue = Ast_Evaluate(root->right);
+
+	if (root->type == NODE_TYPE_ADD)
+	{
+		return leftValue + rightValue;
+	}
+	else if (root->type == NODE_TYPE_SUB)
+	{
+		return leftValue - rightValue;
+	}
+	else if (root->type == NODE_TYPE_MUL)
+	{
+		return leftValue * rightValue;
+	}
+	else if (root->type == NODE_TYPE_DIV)
+	{
+		return leftValue / rightValue;
+	}
+	else
+	{
+		return root->intValue;
+	}
+}

@@ -78,6 +78,7 @@ int main(int argc, char const *argv[])
 	}
 	
 	Ast_Print(root);
+	LOG_DEBUG("%d",Ast_Evaluate(root));
 
 	Ast_Free(root);
 	free(fileDataBuffer);
