@@ -42,6 +42,19 @@ bool Parsing_SkipWhiteSpace(ParsingInfo* info)
 	return PARSING_END_OF_FILE(info);
 }
 
+void ScanDigits(ParsingInfo* info, TokenInfo* tokenInfo)
+{
+	tokenInfo->intValue = 0;
+	tokenInfo->size = 0;
+
+	while (!PARSING_END_OF_FILE(info) && isdigit(PARSING_CURRENT_CHAR(info)))
+	{
+		tokenInfo->intValue = tokenInfo->intValue * 10 + (PARSING_CURRENT_CHAR(info) - '0');
+		tokenInfo->size += 1;
+		MoveForward(info);
+	}
+}
+
 bool Parsing_GetNextToken(ParsingInfo* parsingInfo, TokenInfo* tokenInfo)
 {
 	if (PARSING_END_OF_FILE(parsingInfo))
@@ -56,6 +69,8 @@ bool Parsing_GetNextToken(ParsingInfo* parsingInfo, TokenInfo* tokenInfo)
 
 	const char current = PARSING_CURRENT_CHAR(parsingInfo);
 	bool tokenFound = true;
+
+	tokenInfo->size = 1;
 
 	switch(current)
 	{
@@ -72,15 +87,23 @@ bool Parsing_GetNextToken(ParsingInfo* parsingInfo, TokenInfo* tokenInfo)
 			tokenInfo->type = TOKEN_TYPE_SLASH;
 			break;
 		default:
-			tokenFound = false;
-			break;
+		{
+			if (isdigit(current))
+			{
+				tokenInfo->type = TOKEN_TYPE_INTLIST;
+				ScanDigits(parsingInfo,tokenInfo);
+			}
+			else
+			{
+				tokenFound = false;
+			}
+		} break;
 	}
 
 	if (tokenFound)
 	{
 		tokenInfo->column = parsingInfo->column;
 		tokenInfo->line = parsingInfo->line;
-		tokenInfo->size = 1;
 		MoveForward(parsingInfo);
 	}
 

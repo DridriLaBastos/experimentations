@@ -46,16 +46,16 @@ int main(int argc, char const *argv[])
 				LOG_DEBUG("Found token '+' at %zu:%zu [%zu]",token.line,token.column,token.size);
 				break;
 			case TOKEN_TYPE_MINUS:
-				LOG_DEBUG("Found toekn '-' at %zu:%zu [%zu]",token.line,token.column,token.size);
+				LOG_DEBUG("Found token '-' at %zu:%zu [%zu]",token.line,token.column,token.size);
 				break;
 			case TOKEN_TYPE_STAR:
-				LOG_DEBUG("Found toekn '*' at %zu:%zu [%zu]",token.line,token.column,token.size);
+				LOG_DEBUG("Found token '*' at %zu:%zu [%zu]",token.line,token.column,token.size);
 				break;
 			case TOKEN_TYPE_SLASH:
-				LOG_DEBUG("Found toekn '/' at %zu:%zu [%zu]",token.line,token.column,token.size);
+				LOG_DEBUG("Found token '/' at %zu:%zu [%zu]",token.line,token.column,token.size);
 				break;
 			case TOKEN_TYPE_INTLIST:
-				LOG_INFO("Found a list of integers");
+				LOG_DEBUG("Found a list of integers at %zu:%zu [%zu] : %d",token.line,token.column,token.size,token.intValue);
 				break;
 			default:
 				LOG_ERROR("Unknown token type");
