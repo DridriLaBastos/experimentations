@@ -1,5 +1,6 @@
 #include <ctype.h>
 #include <assert.h>
+#include <stdlib.h> //For NULL
 
 #include "../parsing.h"
 
@@ -14,6 +15,7 @@ void Parsing_Init(char* data, const size_t size, ParsingInfo* dest)
 	dest->cursor = 0;
 	dest->line = 1;
 	dest->column = 0;
+	dest->deepestSubtree = NULL;
 }
 
 static void MoveForward(ParsingInfo* info)
@@ -103,4 +105,53 @@ bool Parsing_GetNextToken(ParsingInfo* parsingInfo, TokenInfo* tokenInfo)
 	}
 
 	return true;
+}
+
+static AST_NODE_TYPE TokenTypeToAstType(TOKEN_TYPE type)
+{
+	switch (type)
+	{
+		case TOKEN_TYPE_INTLIST:
+			return NODE_TYPE_INTLIST;
+		case TOKEN_TYPE_PLUS:
+			return NODE_TYPE_ADD;
+		case TOKEN_TYPE_MINUS:
+			return NODE_TYPE_SUB;
+		case TOKEN_TYPE_STAR:
+			return NODE_TYPE_MUL;
+		case TOKEN_TYPE_SLASH:
+			return NODE_TYPE_DIV;
+		default:
+			assert(false);
+			break;
+	}
+}
+
+AstNode* Parsing_AstFeedToken(ParsingInfo* parsingInfo,TokenInfo* tokenInfo, AstNode* currentRoot)
+{
+	AstNode* node = Ast_AllocateNode(TokenTypeToAstType(tokenInfo->type),tokenInfo->intValue);
+	AstNode* newRoot = currentRoot;
+
+	// Simple case, this is the first node added and its the root
+	if (currentRoot == NULL)
+	{
+		newRoot = node;
+		parsingInfo->deepestSubtree = newRoot;
+	}
+
+	// More complex case : the node is added to the left and the rest of ast isbuild to the right
+	else
+	{
+		if (parsingInfo->deepestSubtree->left == NULL)
+		{
+			parsingInfo->deepestSubtree->left = node;
+		}
+		else
+		{
+			parsingInfo->deepestSubtree->right = node;
+			parsingInfo->deepestSubtree = node;
+		}
+	}
+
+	return newRoot;
 }

@@ -33,10 +33,11 @@ int main(int argc, char const *argv[])
 	fread(fileDataBuffer,fileSizeInByte,1,file);
 
 	ParsingInfo info;
+	TokenInfo token;
+	AstNode* root = NULL;
 
 	Parsing_Init(fileDataBuffer,fileSizeInByte,&info);
 
-	TokenInfo token;
 
 	while (Parsing_GetNextToken(&info,&token))
 	{
@@ -64,8 +65,16 @@ int main(int argc, char const *argv[])
 				LOG_ERROR("Unknown token type");
 				break;
 		}
+
+		if (token.type != TOKEN_TYPE_INVALID)
+		{
+			root = Parsing_AstFeedToken(&info,&token,root);
+		}
 	}
 	
+	Ast_Print(root);
+
+	Ast_Free(root);
 	free(fileDataBuffer);
 	fclose(file);
 

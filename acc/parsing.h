@@ -4,6 +4,8 @@
 #include <stddef.h>
 #include <stdbool.h>
 
+#include "ast.h"
+
 typedef enum E_TOKEN_TYPE
 {
 	TOKEN_TYPE_PLUS, TOKEN_TYPE_MINUS, TOKEN_TYPE_STAR, TOKEN_TYPE_SLASH, TOKEN_TYPE_INTLIST,
@@ -21,6 +23,7 @@ typedef struct S_TOKEN_INFO
 
 typedef struct S_PARSING_INFO
 {
+	AstNode* deepestSubtree;
 	char* data;
 	size_t dataSize;
 	size_t cursor;
@@ -31,5 +34,6 @@ typedef struct S_PARSING_INFO
 void Parsing_Init(char* data, const size_t size, ParsingInfo* dest);
 
 bool Parsing_GetNextToken(ParsingInfo* parsingInfo, TokenInfo* tokenInfo);
+AstNode* Parsing_AstFeedToken(ParsingInfo* parsingInfo,TokenInfo* tokenInfo, AstNode* currentRoot);
 
 #endif //PARSING_H
