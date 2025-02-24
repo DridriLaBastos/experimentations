@@ -1,7 +1,7 @@
 #ifndef PARSING_H
 #define PARSING_H
 
-#include <ctype.h>
+#include <stddef.h>
 #include <stdbool.h>
 
 typedef enum E_TOKEN_TYPE
