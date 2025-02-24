@@ -15,4 +15,4 @@ struct SpriteComponent
 	explicit operator sf::Sprite () const{ return sprite; }
 };
 
-#endif Component//COMPONENT_HPP
+#endif //COMPONENT_HPP
