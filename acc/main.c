@@ -19,7 +19,7 @@ int main(int argc, char const *argv[])
 
 	if (file == NULL)
 	{
-		LOG_ERROR("Unable to open the file '%s' : '%s'",argv[1],strerror(errno),errno);
+		LOG_ERROR("Unable to open the file '%s' : '%s'",argv[1],strerror(errno));
 		return EXIT_FAILURE;
 	}
 
