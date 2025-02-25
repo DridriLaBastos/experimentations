@@ -9,7 +9,7 @@
 
 struct PhysicComponent
 {
-	PhysicComponent(b2BodyId id): bodyId(id) {}
+	PhysicComponent(b2WorldId worldId, const float radius, const b2Vec2 initalPosition = {.0f, .0f});
 	b2BodyId bodyId;
 };
 

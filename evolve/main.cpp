@@ -1,13 +1,18 @@
+#include <random>
 #include <thread>
 #include <iostream>
 
 #include "scene/Scene.hpp"
+#include "scene/AliveComponent.hpp"
 #include "scene/SpriteComponent.hpp"
 
 #include "box2d/box2d.h"
 #include "SFML/Graphics.hpp"
 #include "FastNoise/FastNoise.h"
 #include "scene/PhysicComponent.hpp"
+
+static std::random_device rd;
+static std::mt19937 gen(rd());
 
 constexpr unsigned int WINDOW_WIDTH = 800;
 constexpr unsigned int WINDOW_HEIGHT = 600;
@@ -18,14 +23,17 @@ using Clock = std::chrono::high_resolution_clock;
 using MilliSeconds = std::chrono::duration<float, std::milli>;
 using Seconds      = std::chrono::duration<float>;
 
-static constexpr float TARGET_FPS = 30.0;
-static constexpr float TARGET_TPS = 45.0;
-static constexpr float PIXEL_PER_METER = 10.0;
+static constexpr float TARGET_FPS = 60.0;
+static constexpr float TARGET_TPS = 100.0;
+static constexpr float PIXEL_PER_METER = 50.0;
 static constexpr unsigned int PHYSIC_SOLVER_SUB_STEPS = 6;
 
 static constexpr Seconds SEC_PER_FRAME (1.0f/TARGET_FPS);
 static constexpr Seconds SEC_PER_TICK (1.0/TARGET_TPS);
 static constexpr Seconds GAME_LOOP_SLEEP = std::min(SEC_PER_FRAME,SEC_PER_TICK);
+
+static std::uniform_real_distribution<float> distributionX(0,WINDOW_WIDTH);
+static std::uniform_real_distribution<float> distributionY(0,WINDOW_HEIGHT);
 
 float MapValue(float n, float min, float max, float a, float b) {
     return a + ((n - min) * (b - a)) / (max - min);
@@ -43,7 +51,7 @@ int main(int argc, char const *argv[])
 	text.setCharacterSize(15);
 	text.setFillColor(sf::Color::Red);
 
-	sf::Texture texture (RESOURCE_PATH("textures/particle.png"));
+	sf::Texture particleTexture (RESOURCE_PATH("textures/particle.png"));
 
 	auto frameTimeBegin = Clock::now();
 	auto frameTimeEnd = Clock::now();
@@ -69,25 +77,9 @@ int main(int argc, char const *argv[])
 	wordlDef.gravity = { 0.f,  0.f };
 	b2WorldId worldId = b2CreateWorld(&wordlDef);
 
-	//I apply the pixel per mettre when defining the forces so that I don't have to multiply all the value given by 
-	// Box2d when setting the position of the sprite.
-	b2BodyDef bodyDef = b2DefaultBodyDef();
-	bodyDef.type = b2_dynamicBody;
-	b2BodyId bodyId = b2CreateBody(worldId,&bodyDef);
-
-	b2Body_ApplyTorque(bodyId,60,true);
-
-	b2Circle circleShape;
-	circleShape.center = {0,0};
-	circleShape.radius = 0.4;
-	b2ShapeDef shapeDef = b2DefaultShapeDef();
-	shapeDef.density = 1.0;
-	shapeDef.friction = 0;
-	b2ShapeId shapeId = b2CreateCircleShape(bodyId,&shapeDef,&circleShape);
-
-	std::vector<float> noiseOutput (1000.0*1000.0);
+	std::vector<float> noiseOutput (100.0*100.0);
 	auto node = FastNoise::New<FastNoise::Perlin>();
-	auto output = node->GenUniformGrid2D(noiseOutput.data(),0,0,1000,1000,0.01,19061996);
+	auto output = node->GenUniformGrid2D(noiseOutput.data(),0,0,100,100,0.01,19061996);
 
 	std::vector<sf::Color> colorNoiseOutput (noiseOutput.size());
 
@@ -112,25 +104,29 @@ int main(int argc, char const *argv[])
 		colorNoiseOutput[i] = groundColor;
 	}
 
-	sf::Texture groundTexture (sf::Vector2u{1000,1000});
+	sf::Texture groundTexture (sf::Vector2u{100,100});
 	groundTexture.update((const uint8_t*)colorNoiseOutput.data());
 
 	Scene s;
-	auto spriteEntity1 = s.SpawnEntity();
-	spriteEntity1.AddComponent<PhysicComponent>(bodyId);
-	sf::Sprite& e1Sprite = spriteEntity1.AddComponent<SpriteComponent>(texture).sprite;
-	e1Sprite.setOrigin({texture.getSize().x/2.f,texture.getSize().y/2.f});
-	e1Sprite.setPosition({100,100});
 
-	float scaleFactore = (0.4 * PIXEL_PER_METER)/texture.getSize().x;
+	for (size_t i = 0; i < 1000; i += 1)
+	{
+		SceneEntity e = s.SpawnEntity();
 
-	e1Sprite.setScale({scaleFactore,scaleFactore});
+		AliveComponent& aliveComponent = e.AddComponent<AliveComponent>();
 
-	auto spriteEntity2 = s.SpawnEntity();
-	spriteEntity2.AddComponent<SpriteComponent>(texture);
+		const float x = distributionX(gen);
+		const float y = distributionY(gen);
 
-	auto& spriteComponent = spriteEntity2.GetComponent<SpriteComponent>();
-	spriteComponent.sprite.setPosition({300,300});
+		PhysicComponent& physicComponent = e.AddComponent<PhysicComponent>(worldId,aliveComponent.radius,b2Vec2{x/PIXEL_PER_METER,y/PIXEL_PER_METER});
+		b2Body_SetLinearVelocity(physicComponent.bodyId,{5*aliveComponent.radius,0});
+
+		const float finalPixelSize = aliveComponent.radius * PIXEL_PER_METER;
+		const float scaleFactor = finalPixelSize / particleTexture.getSize().x;
+		SpriteComponent& spriteComponent = e.AddComponent<SpriteComponent>(particleTexture);
+		spriteComponent.sprite.setOrigin({particleTexture.getSize().x/2.f,particleTexture.getSize().y/2.f});
+		spriteComponent.sprite.setScale({scaleFactor,scaleFactor});
+	}
 
 	auto groundEntity = s.SpawnEntity();
 	auto& groundSpriteComponent = groundEntity.AddComponent<SpriteComponent>(groundTexture);
@@ -230,10 +226,14 @@ int main(int argc, char const *argv[])
 
 			if (cameraAcceleration.lengthSquared() <= cameraAccelerationFactor)
 				cameraVelocity += -cameraVelocity * 5.f * SEC_PER_FRAME.count();
-			
-			b2Vec2 localRightMost = b2Body_GetWorldPoint(bodyId,{0.40,0});
-			b2Vec2 force = b2MulSV(10,b2Body_GetWorldVector(bodyId,{1,0}));
-			b2Body_ApplyForce(bodyId,force,localRightMost,true);
+
+			auto aliveEntities = s.mRegistry.view<AliveComponent,PhysicComponent>();
+
+			for (auto& aliveEntity : aliveEntities)
+			{
+				auto [aliveComponent,physicComponent] = aliveEntities.get<AliveComponent,PhysicComponent>(aliveEntity);
+				b2Body_ApplyTorque(physicComponent.bodyId,aliveComponent.radius,true);
+			}
 
 			b2World_Step(worldId,SEC_PER_TICK.count(),4);
 			timeSinceLastUpdate -= SEC_PER_TICK;
