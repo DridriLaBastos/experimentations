@@ -128,19 +128,19 @@ static AST_NODE_TYPE TokenTypeToAstType(TOKEN_TYPE type)
 	}
 }
 
-AstNode* Parsing_AstFeedToken(ParsingInfo* parsingInfo,TokenInfo* tokenInfo, AstNode* currentRoot)
+bool Parsing_AstFeedToken(ParsingInfo* parsingInfo,TokenInfo* tokenInfo, AstNode** root)
 {
 	if (tokenInfo->type == TOKEN_TYPE_INVALID)
 	{
 		LOG_ERROR("%ld:%ld : Invalid token", tokenInfo->line,tokenInfo->column);
-		return NULL;
+		return false;
 	}
 
 	AstNode* node = Ast_AllocateNode(TokenTypeToAstType(tokenInfo->type),tokenInfo->intValue);
-	AstNode* newRoot = currentRoot;
+	AstNode* newRoot = *root;
 
 	// Simple case, this is the first node added and its the root
-	if (currentRoot == NULL)
+	if (newRoot == NULL)
 	{
 		newRoot = node;
 		parsingInfo->deepestSubtree = newRoot;
@@ -150,7 +150,7 @@ AstNode* Parsing_AstFeedToken(ParsingInfo* parsingInfo,TokenInfo* tokenInfo, Ast
 		{
 			LOG_ERROR("The first expected token should be a number but got a math operator");
 			Ast_Free(node);
-			return NULL;
+			return false;
 		}
 	}
 	// More complex case : the node is added to the left and the rest of ast isbuild to the right
@@ -162,7 +162,7 @@ AstNode* Parsing_AstFeedToken(ParsingInfo* parsingInfo,TokenInfo* tokenInfo, Ast
 			{
 				LOG_ERROR("%ld:%ld : Expected an integer after a math op but got another integer",tokenInfo->line,tokenInfo->column);
 				Ast_Free(node);
-				return NULL;
+				return false;
 			}
 			
 			AstNode* child = parsingInfo->deepestSubtree;
@@ -177,7 +177,7 @@ AstNode* Parsing_AstFeedToken(ParsingInfo* parsingInfo,TokenInfo* tokenInfo, Ast
 				node->parent->right = node;
 			}
 
-			if (currentRoot == node->left)
+			if (newRoot == node->left)
 			{
 				newRoot = node;
 			}
@@ -188,7 +188,7 @@ AstNode* Parsing_AstFeedToken(ParsingInfo* parsingInfo,TokenInfo* tokenInfo, Ast
 			{
 				LOG_ERROR("%ld:%ld : Expected integer after a math op",tokenInfo->line,tokenInfo->column);
 				Ast_Free(node);
-				return NULL;
+				return false;
 			}
 			parsingInfo->deepestSubtree->right = node;
 			node->parent = parsingInfo->deepestSubtree;
@@ -196,5 +196,6 @@ AstNode* Parsing_AstFeedToken(ParsingInfo* parsingInfo,TokenInfo* tokenInfo, Ast
 		}
 	}
 
-	return newRoot;
+	*root = newRoot;
+	return true;
 }
