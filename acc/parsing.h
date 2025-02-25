@@ -35,5 +35,6 @@ void Parsing_Init(char* data, const size_t size, ParsingInfo* dest);
 
 bool Parsing_GetNextToken(ParsingInfo* parsingInfo, TokenInfo* tokenInfo);
 bool Parsing_AstFeedToken(ParsingInfo* parsingInfo,TokenInfo* tokenInfo, AstNode** root);
+char* Parsing_GetLastErrorDescription(void);
 
 #endif //PARSING_H
