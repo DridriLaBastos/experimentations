@@ -128,11 +128,20 @@ static AST_NODE_TYPE TokenTypeToAstType(TOKEN_TYPE type)
 	}
 }
 
+static char errorDescription [256];
+
+#define SET_ERROR_MSG(fmt,...) do { snprintf(errorDescription,sizeof(errorDescription),fmt,##__VA_ARGS__); } while(false)
+
+char* Parsing_GetLastErrorDescription(void)
+{
+	return errorDescription;
+}
+
 bool Parsing_AstFeedToken(ParsingInfo* parsingInfo,TokenInfo* tokenInfo, AstNode** root)
 {
 	if (tokenInfo->type == TOKEN_TYPE_INVALID)
 	{
-		LOG_ERROR("%ld:%ld : Invalid token", tokenInfo->line,tokenInfo->column);
+		SET_ERROR_MSG("%ld:%ld : Invalid token", tokenInfo->line,tokenInfo->column);
 		return false;
 	}
 
@@ -148,7 +157,7 @@ bool Parsing_AstFeedToken(ParsingInfo* parsingInfo,TokenInfo* tokenInfo, AstNode
 		//In that case the syntax forces the token to be a number
 		if (tokenInfo->type != TOKEN_TYPE_INTLIST)
 		{
-			LOG_ERROR("The first expected token should be a number but got a math operator");
+			SET_ERROR_MSG("The first expected token should be a number but got a math operator");
 			Ast_Free(node);
 			return false;
 		}
@@ -160,7 +169,7 @@ bool Parsing_AstFeedToken(ParsingInfo* parsingInfo,TokenInfo* tokenInfo, AstNode
 		{
 			if (tokenInfo->type == TOKEN_TYPE_INTLIST)
 			{
-				LOG_ERROR("%ld:%ld : Expected an integer after a math op but got another integer",tokenInfo->line,tokenInfo->column);
+				SET_ERROR_MSG("%ld:%ld : Expected an integer after a math op but got another integer",tokenInfo->line,tokenInfo->column);
 				Ast_Free(node);
 				return false;
 			}
@@ -186,7 +195,7 @@ bool Parsing_AstFeedToken(ParsingInfo* parsingInfo,TokenInfo* tokenInfo, AstNode
 		{
 			if (tokenInfo->type != TOKEN_TYPE_INTLIST)
 			{
-				LOG_ERROR("%ld:%ld : Expected integer after a math op",tokenInfo->line,tokenInfo->column);
+				SET_ERROR_MSG("%ld:%ld : Expected integer after a math op",tokenInfo->line,tokenInfo->column);
 				Ast_Free(node);
 				return false;
 			}
@@ -196,6 +205,7 @@ bool Parsing_AstFeedToken(ParsingInfo* parsingInfo,TokenInfo* tokenInfo, AstNode
 		}
 	}
 
+	SET_ERROR_MSG("%s","");
 	*root = newRoot;
 	return true;
 }

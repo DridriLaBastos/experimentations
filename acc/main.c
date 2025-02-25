@@ -70,7 +70,7 @@ int main(int argc, char const *argv[])
 
 		if (ret == false)
 		{
-			//TODO: We want to display error message here
+			LOG_ERROR("%s",Parsing_GetLastErrorDescription());
 			break;
 		}
 	}
