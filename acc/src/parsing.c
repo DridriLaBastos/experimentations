@@ -15,7 +15,7 @@ void Parsing_Init(char* data, const size_t size, ParsingInfo* dest)
 	dest->dataSize = size;
 	dest->cursor = 0;
 	dest->line = 1;
-	dest->column = 0;
+	dest->column = 1;
 	dest->deepestSubtree = NULL;
 }
 
@@ -130,6 +130,12 @@ static AST_NODE_TYPE TokenTypeToAstType(TOKEN_TYPE type)
 
 AstNode* Parsing_AstFeedToken(ParsingInfo* parsingInfo,TokenInfo* tokenInfo, AstNode* currentRoot)
 {
+	if (tokenInfo->type == TOKEN_TYPE_INVALID)
+	{
+		LOG_ERROR("%ld:%ld : Invalid token", tokenInfo->line,tokenInfo->column);
+		return NULL;
+	}
+
 	AstNode* node = Ast_AllocateNode(TokenTypeToAstType(tokenInfo->type),tokenInfo->intValue);
 	AstNode* newRoot = currentRoot;
 
@@ -152,6 +158,13 @@ AstNode* Parsing_AstFeedToken(ParsingInfo* parsingInfo,TokenInfo* tokenInfo, Ast
 	{
 		if (parsingInfo->deepestSubtree->type == NODE_TYPE_INTLIST)
 		{
+			if (tokenInfo->type == TOKEN_TYPE_INTLIST)
+			{
+				LOG_ERROR("%ld:%ld : Expected an integer after a math op but got another integer",tokenInfo->line,tokenInfo->column);
+				Ast_Free(node);
+				return NULL;
+			}
+			
 			AstNode* child = parsingInfo->deepestSubtree;
 			node->parent = child->parent;
 			child->parent = node;
@@ -171,6 +184,12 @@ AstNode* Parsing_AstFeedToken(ParsingInfo* parsingInfo,TokenInfo* tokenInfo, Ast
 		}
 		else
 		{
+			if (tokenInfo->type != TOKEN_TYPE_INTLIST)
+			{
+				LOG_ERROR("%ld:%ld : Expected integer after a math op",tokenInfo->line,tokenInfo->column);
+				Ast_Free(node);
+				return NULL;
+			}
 			parsingInfo->deepestSubtree->right = node;
 			node->parent = parsingInfo->deepestSubtree;
 			parsingInfo->deepestSubtree = node;
