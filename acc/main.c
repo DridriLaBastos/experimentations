@@ -66,16 +66,12 @@ int main(int argc, char const *argv[])
 				break;
 		}
 
-		AstNode* ret = Parsing_AstFeedToken(&info,&token,root);
+		bool ret = Parsing_AstFeedToken(&info,&token,&root);
 
-		if (ret == NULL)
+		if (ret == false)
 		{
 			//TODO: We want to display error message here
 			break;
-		}
-		else
-		{
-			root = ret;
 		}
 	}
 	

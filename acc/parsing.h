@@ -34,6 +34,6 @@ typedef struct S_PARSING_INFO
 void Parsing_Init(char* data, const size_t size, ParsingInfo* dest);
 
 bool Parsing_GetNextToken(ParsingInfo* parsingInfo, TokenInfo* tokenInfo);
-AstNode* Parsing_AstFeedToken(ParsingInfo* parsingInfo,TokenInfo* tokenInfo, AstNode* currentRoot);
+bool Parsing_AstFeedToken(ParsingInfo* parsingInfo,TokenInfo* tokenInfo, AstNode** root);
 
 #endif //PARSING_H
