@@ -29,8 +29,8 @@ static constexpr float PIXEL_PER_METER = 50.0;
 static constexpr unsigned int PHYSIC_SOLVER_SUB_STEPS = 6;
 
 static constexpr Seconds SEC_PER_FRAME (1.0f/TARGET_FPS);
-static constexpr Seconds SEC_PER_TICK (1.0/TARGET_TPS);
-static constexpr Seconds GAME_LOOP_SLEEP = std::min(SEC_PER_FRAME,SEC_PER_TICK);
+// static constexpr Seconds SEC_PER_TICK (1.0/TARGET_TPS);
+static constexpr Seconds GAME_LOOP_SLEEP = std::min(SEC_PER_FRAME,SEC_PER_FRAME);
 
 static std::uniform_real_distribution<float> distributionX(0,WINDOW_WIDTH);
 static std::uniform_real_distribution<float> distributionY(0,WINDOW_HEIGHT);
@@ -56,9 +56,9 @@ int main(int argc, char const *argv[])
 	auto frameTimeBegin = Clock::now();
 	auto frameTimeEnd = Clock::now();
 	unsigned int frameCount = 0;
-	unsigned int tickCount = 0;
+	// unsigned int tickCount = 0;
 	Seconds timeSinceLastFrame (0);
-	Seconds timeSinceLastUpdate (0);
+	// Seconds timeSinceLastUpdate (0);
 	Seconds elapsedTime (0);
 
 	float zoomAccelerationFactor = 300.0;
@@ -202,9 +202,11 @@ int main(int argc, char const *argv[])
 			}
 		}
 
-		while (timeSinceLastUpdate >= SEC_PER_TICK)
+		while (timeSinceLastFrame >= SEC_PER_FRAME)
 		{
-			tickCount += 1;
+			frameCount += 1;
+			
+			// Update
 			sf::Vector2f mainCameraSize = mainCamera.getSize();
 			sf::Vector2f newCameraSize = mainCameraSize;
 			
@@ -235,13 +237,10 @@ int main(int argc, char const *argv[])
 				b2Body_ApplyTorque(physicComponent.bodyId,aliveComponent.radius,true);
 			}
 
-			b2World_Step(worldId,SEC_PER_TICK.count(),4);
-			timeSinceLastUpdate -= SEC_PER_TICK;
-		}
+			b2World_Step(worldId,SEC_PER_FRAME.count(),4);
+			// timeSinceLastUpdate -= SEC_PER_TICK;
 
-		while (timeSinceLastFrame >= SEC_PER_FRAME)
-		{
-			frameCount += 1;
+			// Render
 
 			window.clear(sf::Color::Magenta);
 			window.setView(mainCamera);
@@ -287,22 +286,23 @@ int main(int argc, char const *argv[])
 		{
 			char buffer [64];
 			const float averageFrameTime = elapsedTime.count() / static_cast<float>(frameCount);
-			snprintf(buffer,sizeof(buffer),"FPS %d (%.3fms)\nGame tick : %d", frameCount, averageFrameTime*1000.0f,tickCount);
+			snprintf(buffer,sizeof(buffer),"FPS %d (%.3fms)", frameCount, averageFrameTime*1000.0f);
 			text.setString(buffer);
 
 			frameCount = 0;
-			tickCount = 0;
 			elapsedTime -= Seconds(1);
 		}
 
 		frameTimeEnd = Clock::now();
 		MilliSeconds loopTime = frameTimeEnd - frameTimeBegin;
 		timeSinceLastFrame += loopTime;
-		timeSinceLastUpdate += loopTime;
 		elapsedTime += loopTime;
 		frameTimeBegin = frameTimeEnd;
 
-		std::this_thread::sleep_for(GAME_LOOP_SLEEP);
+		if (loopTime < GAME_LOOP_SLEEP)
+		{
+			std::this_thread::sleep_for(GAME_LOOP_SLEEP - loopTime);
+		}
 	}
 
 	b2DestroyWorld(worldId);
