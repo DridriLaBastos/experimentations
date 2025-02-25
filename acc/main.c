@@ -66,14 +66,16 @@ int main(int argc, char const *argv[])
 				break;
 		}
 
-		if (token.type != TOKEN_TYPE_INVALID)
-		{
-			root = Parsing_AstFeedToken(&info,&token,root);
-		}
+		AstNode* ret = Parsing_AstFeedToken(&info,&token,root);
 
-		if (root == NULL)
+		if (ret == NULL)
 		{
+			//TODO: We want to display error message here
 			break;
+		}
+		else
+		{
+			root = ret;
 		}
 	}
 	
