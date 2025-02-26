@@ -5,9 +5,18 @@
 #include "../log.h"
 #include "../parsing.h"
 
+static unsigned int tokenTypePrecedence[] = {
+	0, // TOKEN_TYPE_PLUS  = 0
+	0, // TOKEN_TYPE_MINUS = 1
+	1, // TOKEN_TYPE_STAR  = 2
+	1, // TOKEN_TYPE_SLASH = 3
+};
+
 #define IS_MATH_OP(c) ((c == '+') || (c == '-') || (c == '*') || (c == '/'))
 #define PARSING_END_OF_FILE(info) (info->cursor >= info->dataSize)
 #define PARSING_CURRENT_CHAR(info) (info->data[info->cursor])
+
+#define OPERATOR_PRECEDENCE(type) tokenTypePrecedence[(size_t)type]
 
 void Parsing_Init(char* data, const size_t size, ParsingInfo* dest)
 {
@@ -165,19 +174,42 @@ bool Parsing_AstFeedToken(ParsingInfo* parsingInfo,TokenInfo* tokenInfo, AstNode
 	// More complex case : the node is added to the left and the rest of ast isbuild to the right
 	else
 	{
+		// Adding a math op
 		if (parsingInfo->deepestSubtree->type == NODE_TYPE_INTLIST)
 		{
 			if (tokenInfo->type == TOKEN_TYPE_INTLIST)
 			{
-				SET_ERROR_MSG("%ld:%ld : Expected an integer after a math op but got another integer",tokenInfo->line,tokenInfo->column);
+				SET_ERROR_MSG("%ld:%ld : Expected a math op after an integer but got another integer",tokenInfo->line,tokenInfo->column);
 				Ast_Free(node);
 				return false;
 			}
-			
-			AstNode* child = parsingInfo->deepestSubtree;
-			node->parent = child->parent;
-			child->parent = node;
-			node->left = child;
+
+			// By default add to the right
+			unsigned int currentOperatorPrecedence = 1;
+			unsigned int newOperatorPrecedence = 0;
+
+			if (parsingInfo->deepestSubtree->parent != NULL)
+			{
+				const TOKEN_TYPE currentOperator = parsingInfo->deepestSubtree->parent->type;
+				const TOKEN_TYPE newOperator = tokenInfo->type;
+
+				currentOperatorPrecedence = OPERATOR_PRECEDENCE(currentOperator);
+				newOperatorPrecedence = OPERATOR_PRECEDENCE(newOperator);
+			}
+
+			if (newOperatorPrecedence <= currentOperatorPrecedence)
+			{
+				node->left = *root;
+				(*root)->parent = node;
+				newRoot = node;
+			}
+			else
+			{
+				AstNode* child = parsingInfo->deepestSubtree;
+				node->parent = child->parent;
+				child->parent = node;
+				node->left = child;
+			}
 
 			parsingInfo->deepestSubtree = node;
 
@@ -191,6 +223,7 @@ bool Parsing_AstFeedToken(ParsingInfo* parsingInfo,TokenInfo* tokenInfo, AstNode
 				newRoot = node;
 			}
 		}
+		//Adding an integer
 		else
 		{
 			if (tokenInfo->type != TOKEN_TYPE_INTLIST)
@@ -199,6 +232,7 @@ bool Parsing_AstFeedToken(ParsingInfo* parsingInfo,TokenInfo* tokenInfo, AstNode
 				Ast_Free(node);
 				return false;
 			}
+
 			parsingInfo->deepestSubtree->right = node;
 			node->parent = parsingInfo->deepestSubtree;
 			parsingInfo->deepestSubtree = node;
