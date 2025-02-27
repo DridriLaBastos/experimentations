@@ -9,6 +9,19 @@ static bool  registerAvailable [] = {true , true , true , true , true , true , t
 
 #define REG_NAME(regId) s64BitsRegisters[regId]
 
+#define REG_GUARD(REGID) if(REGID == INVALID_REG_ID) { return INVALID_REG_ID; }
+#define MATH_OP_REG_GUARD(LEFT,RIGHT)   \
+    REG_GUARD(LEFT)                     \
+    REG_GUARD(RIGHT)                    
+
+#define OUT_ASM(asm_fmt,...) fprintf(stdout, "\t" asm_fmt "\n",##__VA_ARGS__)
+
+#define MATH_OP(MATH_MNEMONIC, LEFT, RIGHT) \
+    MATH_OP_REG_GUARD(LEFT,RIGHT) \
+    OUT_ASM(MATH_MNEMONIC " %s,%s",REG_NAME(LEFT),REG_NAME(RIGHT)); \
+    FreeRegister(RIGHT); \
+    return LEFT
+
 static RegId AllocateRegister(void)
 {
     RegId allocated = 0;
@@ -32,37 +45,27 @@ static void FreeRegister(const RegId reg)
 
 RegId AsGenApi_Add(const RegId leftReg, const RegId rightReg)
 {
-    if (leftReg == INVALID_REG_ID)
-    {
-        //LOG_ERROR("Trying to generate an add instruction but got an invalid src register");
-        return INVALID_REG_ID;
-    }
+    MATH_OP("add",leftReg,rightReg);
+}
 
-    if (rightReg == INVALID_REG_ID)
-    {
-        //LOG_ERROR("Trying to generate an add instruction but got an invalid dest register");
-        return INVALID_REG_ID;
-    }
+RegId AsGenApi_Sub(const RegId leftReg, const RegId rightReg)
+{
+    MATH_OP("sub",leftReg,rightReg);
+}
 
-    printf("add %s, %s\n",REG_NAME(leftReg),REG_NAME(rightReg));
+RegId AsGenApi_Mul(const RegId leftReg, const RegId rightReg)
+{
+    MATH_OP("mul",leftReg,rightReg);
+}
+
+RegId AsGenApi_Div(const RegId leftReg, const RegId rightReg)
+{
+    MATH_OP_REG_GUARD(leftReg,rightReg);
+    OUT_ASM("mov rax, %s",REG_NAME(leftReg));
+    OUT_ASM("cqo");
+    OUT_ASM("div %s",REG_NAME(rightReg));
     FreeRegister(rightReg);
-
-    return rightReg;
-}
-
-RegId AsGenApi_Sub(const RegId regLeft, const RegId regRight)
-{
-    return INVALID_REG_ID;
-}
-
-RegId AsGenApi_Mul(const RegId regLeft, const RegId regRight)
-{
-    return INVALID_REG_ID;
-}
-
-RegId AsGenApi_Div(const RegId regLeft, const RegId regRight)
-{
-    return INVALID_REG_ID;
+    return leftReg;
 }
 
 RegId AsGenApi_Load(const int value)
@@ -71,7 +74,7 @@ RegId AsGenApi_Load(const int value)
 
     if (allocated != INVALID_REG_ID)
     {
-        printf("mov %s,%d\n",REG_NAME(allocated),value);
+        OUT_ASM("mov %s,%d",REG_NAME(allocated),value);
     }
 
     return allocated;
