@@ -27,7 +27,7 @@ FetchContent_Declare(box2d
 	GIT_PROGRESS ON
 	)
 
-FetchContent_MakeAvailable(sfml glm box2d)
+# FetchContent_MakeAvailable(sfml glm box2d)
 
 if (NOT $MSVC)
 	add_compile_options(-Wall -Wextra)
@@ -36,11 +36,11 @@ include_directories(${CMAKE_SOURCE_DIR})
 
 add_subdirectory(util)
 
-add_subdirectory(nn)
-add_subdirectory(opencv)
-add_subdirectory(pong_from_scratch)
-add_subdirectory(hardwaresim)
-add_subdirectory(raytracing)
-add_subdirectory(sfml_game)
-add_subdirectory(evolve)
+# add_subdirectory(nn)
+# add_subdirectory(opencv)
+# add_subdirectory(pong_from_scratch)
+# add_subdirectory(hardwaresim)
+# add_subdirectory(raytracing)
+# add_subdirectory(sfml_game)
+# add_subdirectory(evolve)
 add_subdirectory(acc)
