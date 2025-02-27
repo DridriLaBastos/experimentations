@@ -81,7 +81,7 @@ int main(int argc, char const *argv[])
 
 	if (root)
 	{
-		const RegId id = AsGen_Generate(root);
+		AsGen_Generate(root);
 	}
 
 	Ast_Free(root);
