@@ -7,13 +7,6 @@
 
 typedef unsigned int RegId;
 
-RegId AsGen_Add(const RegId regLeft, const RegId regRight);
-RegId AsGen_Sub(const RegId regLeft, const RegId regRight);
-RegId AsGen_Mul(const RegId regLeft, const RegId regRight);
-RegId AsGen_Div(const RegId regLeft, const RegId regRight);
-
-RegId AsGen_Load(const int value);
-
-RegId AsGen_Generate(const AstNode* root);
+void AsGen_Generate(const AstNode* root);
 
 #endif //ASSEMBLLY_GENERATOR_H
