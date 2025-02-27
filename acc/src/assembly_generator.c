@@ -33,6 +33,6 @@ static RegId InternalAssemblyGenerate(const AstNode* root)
 void AsGen_Generate(const AstNode* root)
 {
     AsGenApi_Preamble();
-    InternalAssemblyGenerate(root);
-    AsGenApi_Postamble();
+    RegId reg = InternalAssemblyGenerate(root);
+    AsGenApi_Postamble(reg);
 }
