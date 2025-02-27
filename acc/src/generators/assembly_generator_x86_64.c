@@ -83,18 +83,19 @@ RegId AsGenApi_Load(const int value)
 void AsGenApi_Preamble(void)
 {
     puts(
+        "[BITS 64]\n"
         "global main\n"
         "main:\n"
-        "push rbp # Save stask frame\n"
-        "mov rbp, rsp\n"
+        "push rbp ; Save stask frame\n"
+        "mov rbp, rsp"
     );
 }
 
 void AsGenApi_Postamble(void)
 {
     puts(
-        "pop rbp # Restore stack frame\n"
+        "pop rbp ; Restore stack frame\n"
         "mov rax, 0\n"
-        "ret\n"
+        "ret"
     );
 }
