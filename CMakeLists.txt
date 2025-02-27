@@ -27,7 +27,7 @@ FetchContent_Declare(box2d
 	GIT_PROGRESS ON
 	)
 
-FetchContent_MakeAvailable(sfml glm box2d)
+# FetchContent_MakeAvailable(sfml glm box2d)
 
 if (${MSVC})
 	add_compile_options(/W4)
