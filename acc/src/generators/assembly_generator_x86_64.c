@@ -91,11 +91,13 @@ void AsGenApi_Preamble(void)
     );
 }
 
-void AsGenApi_Postamble(void)
+void AsGenApi_Postamble(const RegId ret_value)
 {
-    puts(
-        "pop rbp ; Restore stack frame\n"
-        "mov rax, 0\n"
-        "ret"
-    );
+    puts("pop rbp ; Restore stack frame");
+    if (ret_value == INVALID_REG_ID)
+        puts("mov rax, 0");
+    else
+        fprintf(stdout, "mov rax, %s\n",REG_NAME(ret_value));
+    
+    puts("ret");
 }
