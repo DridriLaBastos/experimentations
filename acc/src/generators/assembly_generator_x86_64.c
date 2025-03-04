@@ -99,5 +99,5 @@ void AsGenApi_Postamble(const RegId ret_value)
     else
         fprintf(stdout, "\tmov rax, %s\n",REG_NAME(ret_value));
     
-    puts("ret");
+    puts("\tret");
 }
