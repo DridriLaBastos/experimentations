@@ -61,14 +61,14 @@ char* GetNodeTypeDescription(AST_NODE_TYPE type)
 
 static void PrintNode(AstNode* node)
 {
-	printf("%s",GetNodeTypeDescription(node->type));
+	fprintf(stderr,"%s",GetNodeTypeDescription(node->type));
 
 	if (node->type == NODE_TYPE_INTLIST)
 	{
-		printf(" (%d)",node->intValue);
+		fprintf(stderr," (%d)",node->intValue);
 	}
 
-	puts("");
+	fputs("\n",stderr);
 }
 
 static void InternalAstPrint(AstNode* root, int level)
@@ -77,7 +77,7 @@ static void InternalAstPrint(AstNode* root, int level)
 	{
 		for (int i = 0; i < level; i += 1)
 		{
-			printf("  ");
+			fprintf(stderr,"   ");
 		}
 
 		PrintNode(root);
