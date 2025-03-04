@@ -55,7 +55,7 @@ RegId AsGenApi_Sub(const RegId leftReg, const RegId rightReg)
 
 RegId AsGenApi_Mul(const RegId leftReg, const RegId rightReg)
 {
-    MATH_OP("mul",leftReg,rightReg);
+    MATH_OP("imul",leftReg,rightReg);
 }
 
 RegId AsGenApi_Div(const RegId leftReg, const RegId rightReg)
@@ -86,18 +86,18 @@ void AsGenApi_Preamble(void)
         "[BITS 64]\n"
         "global main\n"
         "main:\n"
-        "push rbp ; Save stask frame\n"
-        "mov rbp, rsp"
+        "\tpush rbp ; Save stask frame\n"
+        "\tmov rbp, rsp"
     );
 }
 
 void AsGenApi_Postamble(const RegId ret_value)
 {
-    puts("pop rbp ; Restore stack frame");
+    puts("\tpop rbp ; Restore stack frame");
     if (ret_value == INVALID_REG_ID)
-        puts("mov rax, 0");
+        puts("\tmov rax, 0");
     else
-        fprintf(stdout, "mov rax, %s\n",REG_NAME(ret_value));
+        fprintf(stdout, "\tmov rax, %s\n",REG_NAME(ret_value));
     
     puts("ret");
 }
