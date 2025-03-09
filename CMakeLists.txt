@@ -29,7 +29,9 @@ FetchContent_Declare(box2d
 
 FetchContent_MakeAvailable(sfml glm box2d)
 
-if (NOT $MSVC)
+if (${MSVC})
+	add_compile_options(W4)
+else()
 	add_compile_options(-Wall -Wextra)
 endif()
 include_directories(${CMAKE_SOURCE_DIR})
