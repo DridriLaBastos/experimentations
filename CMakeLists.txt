@@ -37,7 +37,6 @@ include_directories(${CMAKE_SOURCE_DIR})
 add_subdirectory(util)
 
 add_subdirectory(nn)
-add_subdirectory(opencv)
 add_subdirectory(pong_from_scratch)
 add_subdirectory(hardwaresim)
 add_subdirectory(raytracing)
