@@ -72,11 +72,15 @@ WSGI_APPLICATION = 'bexig.wsgi.application'
 
 # Database
 # https://docs.djangoproject.com/en/4.2/ref/settings/#databases
-
+#
+# For multiple databases
+# https://docs.djangoproject.com/en/5.1/topics/db/multi-db/
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': 'bexig',
+        'HOST': '127.0.0.1',
+        'PORT': '5432',
     }
 }
 
