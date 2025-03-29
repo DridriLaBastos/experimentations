@@ -1,17 +1,20 @@
+{% load static %}
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <script src="https://www.unpkg.com/wysimark-standalone/dist/javascript/index.cjs.js"></script>
-    <title>Edition</title>
+    <script type="module" src= {% static "writing/script.js" %}  defer="true"></script>
+    <link rel="stylesheet" href={% static "writing/style.css" %}>
+    <title>{{ queried_document.name }}</title>
 </head>
 <body>
-    <div id="editor-container"></div>
-
-    <script>
-        const container = document.getElementById("editor-container")
-        const wysimark = createWysimark(container, {initialMarkdown: "Write your doc here",})
-    </script>
+    <div id="writing-flex-container">
+        <span id="markdown_content" class="editor-subview" contenteditable="true">
+            {{queried_document.data}}
+        </span>
+        <div id="markdown_preview" class="editor-subview"></div>
+    </div>
 </body>
 </html>

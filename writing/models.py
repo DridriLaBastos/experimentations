@@ -6,3 +6,7 @@ class Document(models.Model):
     creation = models.DateTimeField("creation_date")
     modif    = models.DateTimeField("last_modified")
     data     = models.TextField("markedown_content")
+    
+    def __str__(self):
+        return f"'{self.name}'"
+    

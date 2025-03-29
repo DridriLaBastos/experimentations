@@ -1,0 +1,8 @@
+#writing-flex-container {
+    display: flex;
+    flex-direction: row;
+}
+
+.editor-subview {
+    width: 50%;
+}
