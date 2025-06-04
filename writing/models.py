@@ -5,7 +5,11 @@ class Document(models.Model):
     name     = models.CharField("document_name",max_length=256)
     creation = models.DateTimeField("creation_date")
     modif    = models.DateTimeField("last_modified")
-    data     = models.TextField("markedown_content")
+    mddata   = models.TextField("markedown_content", default="")
+    htmldata = models.TextField("html_content", default="")
+    
+    class Meta:
+        db_table='documents'
     
     def __str__(self):
         return f"'{self.name}'"
