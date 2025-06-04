@@ -6,6 +6,17 @@
     <title>Connect</title>
 </head>
 <body>
-    <h1>This is a connection page</h1>
+    <form action="{% url "connect" %}" method="post">
+        {% csrf_token %}
+
+        <fieldset>
+            <legend>
+                <p>Login</p>
+            </legend>
+            <input type="text" name="username" placeholder="username" required><br>
+            <input type="password" name="psw" placeholder="password" required><br>
+            <input type="submit" value="Submit">
+        </fieldset>
+    </form>
 </body>
 </html>
