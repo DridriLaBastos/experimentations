@@ -30,7 +30,7 @@ FetchContent_Declare(box2d
 FetchContent_MakeAvailable(sfml glm box2d)
 
 if (${MSVC})
-	add_compile_options(W4)
+	add_compile_options(/W4)
 else()
 	add_compile_options(-Wall -Wextra)
 endif()
