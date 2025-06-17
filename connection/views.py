@@ -1,8 +1,10 @@
-from django.shortcuts import render
+from django.shortcuts import render, redirect
 
 from django.contrib.auth import authenticate, login, logout
 
 from django.http import HttpResponse
+
+from django.urls import reverse
 
 # Create your views here.
 def connect(request):
@@ -20,12 +22,10 @@ def try_connect(request):
         print("USER NOT FOUND")
         return HttpResponse("User not found")
     else:
-        print(f"USER FOUND : {user}")
         login(request,user)
-        return HttpResponse(f"Welcome to Bexig {user.first_name} {user.last_name} @ {user.username}")
-    
+        return redirect("explorer:explore")
 
 def try_disconnect(request):
     if request.user.is_authenticated:
         logout(request)
-    return HttpResponse(request)
+    return redirect("connection:home")

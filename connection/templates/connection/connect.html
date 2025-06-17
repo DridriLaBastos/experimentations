@@ -6,7 +6,7 @@
     <title>Connect</title>
 </head>
 <body>
-    <form action="{% url "connect" %}" method="post">
+    <form action="{% url "connection:connect" %}" method="post">
         {% csrf_token %}
 
         <fieldset>

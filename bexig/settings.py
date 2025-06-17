@@ -33,6 +33,7 @@ ALLOWED_HOSTS = []
 INSTALLED_APPS = [
     'writing.apps.WritingConfig',
     'connection.apps.ConnectionConfig',
+    'explorer.apps.ExplorerConfig',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
