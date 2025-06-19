@@ -28,4 +28,8 @@ def try_connect(request):
 def try_disconnect(request):
     if request.user.is_authenticated:
         logout(request)
+        print("*** SUCCESSFULLY LOGGED OUT ***")
+    else:
+        print("*** NO USER LOGGED IN ***")
+    
     return redirect("connection:home")
