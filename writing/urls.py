@@ -9,6 +9,5 @@ app_name = "writing"
 urlpatterns = [
     path("",views.edition,name="default_document_edition"),
     path("<int:requested_document_id>/",views.edition,name="document_edition"),
-    
     path ("update/<int:document_id>/",views.update,name="document_update")
 ]

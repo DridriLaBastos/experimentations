@@ -4,14 +4,15 @@ var markdownPreview = document.getElementById("markdown-preview")
 var markdownContent = document.getElementById("markdown-content")
 
 var databaseRequestGoing = false
-var currentDocumentId = document.getElementById("mainjs").getAttribute("documentid")
+var currentDocumentId = document.body.dataset.documentId
 
 // https://docs.djangoproject.com/en/5.1/howto/csrf/#acquiring-the-token-if-csrf-use-sessions-or-csrf-cookie-httponly-is-true
 const csrftoken = document.querySelector('[name=csrfmiddlewaretoken]').value;
 
 // TODO: Optimize the size when sending 
 function updateDatabase() {
-    fetch("/update/0/",{
+
+    fetch("/writing/update/" + currentDocumentId + "/",{
         method: "POST",
         headers:{
             'Content-Type': 'application/json',
@@ -26,8 +27,6 @@ function updateDatabase() {
     }).finally(() => {
         databaseRequestGoing = false
     })
-
-    console.log(converter.makeMd(markdownPreview.innerHTML))
 }
 
 function requestDataBaseUpdate() {
