@@ -20,7 +20,7 @@ from django.urls import include, path
 from connection.views import connect
 
 urlpatterns = [
-    path("connection/", include("connection.urls")),
+    path("", include("connection.urls")),
     path("explorer/", include("explorer.urls")),
     path("admin/", admin.site.urls),
 ]
