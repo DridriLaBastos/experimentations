@@ -8,10 +8,16 @@
 <body>
     <p>Welcome {{ user.first_name }} {{ user.last_name }} @ {{ user.username }}</p>
     
-    <form action="{% url "connection:home" %}" method="post">
+    <form action="{% url "connection:disconnect" %}" method="post">
         {% csrf_token %}
         <button type="submit">Disconnect</button>
     </form>
+
+    {% for document in authorized_document_list %}
+    
+    <a href="{% url "writing:document_edition" document.id  %}"> {{ document.name }} </a>
+
+    {% endfor %}
 
 </body>
 </html>

@@ -23,4 +23,5 @@ urlpatterns = [
     path("", include("connection.urls")),
     path("explorer/", include("explorer.urls")),
     path("admin/", admin.site.urls),
+    path("writing/", include("writing.urls"))
 ]
