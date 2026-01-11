@@ -1,7 +1,5 @@
 project(Evolve DESCRIPTION "Using SFML to toy with evolution algorithms")
 
-include (FetchContent)
-
 add_executable(evolve main.cpp
 				scene/Scene.hpp
 				scene/entt/entt.hpp
