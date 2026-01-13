@@ -1,0 +1,11 @@
+services:
+  postgres:
+    container_name: postgres
+    image: postgres:14
+    networks:
+      - net
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_PASSWORD=pgpassword
+      - POSTGRES_USER=developer
