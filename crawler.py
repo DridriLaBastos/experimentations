@@ -1,4 +1,4 @@
-# import requests
+import requests
 from urllib.request import urlopen, Request
 from urllib.parse import urljoin, urlparse
 from bs4 import BeautifulSoup
@@ -10,17 +10,14 @@ from random import randint
 def PerformCrawling(currentUrl: str):
     print(f"Currently crawling {currentUrl}")
     
-    req = Request(currentUrl, headers={"User-Agent": "Mozilla/5.0"})
-    
     begin = timer()
-    # response = requests.get(currentUrl)
-    response = urlopen(req, timeout=30)
+    response = requests.get(currentUrl, headers={"User-Agent": "Mozilla/5.0"}, timeout=30)
     fetchTimeMs = (timer() - begin) * 1000
     links = []
     
     if "text/html" in response.headers.get("Content-Type", ""):
         begin = timer()
-        soup = BeautifulSoup(response, "html.parser")
+        soup = BeautifulSoup(response.text, "html.parser")
         parseTimeMs = (timer() - begin) * 1000
         print(f"\tfetch: {fetchTimeMs:.2f}ms   parsing: {parseTimeMs:.2f}ms")
         
