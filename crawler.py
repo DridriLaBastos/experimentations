@@ -5,6 +5,7 @@ from bs4 import BeautifulSoup
 from timeit import default_timer as timer
 from time import sleep
 from collections import deque
+from random import randint
 
 def PerformCrawling(currentUrl: str):
     print(f"Currently crawling {currentUrl}")
@@ -31,34 +32,31 @@ def PerformCrawling(currentUrl: str):
     return links
 
 def crawler():
-    urls = deque(["http://fr.wikipedia.org/wiki/Hasard"])
+    urls = ["http://fr.wikipedia.org/wiki/Hasard"]
     visited = set()
     count = 0
+    _pass = 0
     
     while len(urls) != 0:
-        currentUrl = urls.popleft()
+        currentUrl = urls.pop(randint(0, len(urls) - 1))
+        count += 1
+        _pass += 1
         
         if currentUrl in visited:
             continue
         
-        visited.add(currentUrl)
         foundUrls = PerformCrawling(currentUrl)
-        count += 1
+        visited.add(currentUrl)
         
-        if count < 10:
+        disp = f"[{_pass}] "
+        if len(urls) < 10000:
             exclusiveUrls = [url for url in foundUrls if url not in visited]
+            inclusiveUrs  = [url for url in foundUrls if url     in visited]
             urls.extend(exclusiveUrls)
-            print(f"Adding {len(exclusiveUrls)}")
-        print(f"remaining: {len(urls)}")
-        sleep(1.0)
-    
-    # p  = soup.select('p')
-    # h1 = soup.select('h1')
-    # title = soup.select("title")
-    
-    # print(f"Title:\n{title}")
-    # print(f"H1:\n{h1}")
-    # print(f"P:\n{p}")
+            disp += f"{len(foundUrls)}/{len(exclusiveUrls)}/{len(inclusiveUrs)} "
+        disp += f"remaining: {len(urls)}"
+        print(disp)
+        sleep(0.1)
 
 if __name__ == "__main__":
     crawler()
