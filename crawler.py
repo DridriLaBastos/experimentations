@@ -1,7 +1,8 @@
 import requests
 import psycopg2
 import os
-from urllib.parse import urljoin
+from urllib.parse import urljoin, urlparse
+from urllib.robotparser import RobotFileParser
 from bs4 import BeautifulSoup
 from timeit import default_timer as timer
 from time import sleep
@@ -43,6 +44,26 @@ def explore_url(url: str, conn):
         curs.execute("UPDATE crawling SET content = %s WHERE url = %s", (content, url,))
     return links
 
+def remove_robots(links: list[str]):
+    updated_links = []
+    
+    for url in links:
+        parsed_url = urlparse(url)
+        robot_url = f"{parsed_url.scheme}://{parsed_url.netloc}/robots.txt"
+        rp = RobotFileParser()
+        rp.set_url(robot_url)
+        
+        try:
+            rp.read()
+            canfetch = rp.can_fetch("Mozilla/5.0",url)
+            if canfetch:
+                updated_links.append(url)
+            # TODO: If a robot file can't be retrieve, apparently, according to the standard, it means that all url are valid
+        except Exception as e:
+            print(f"Error retrieving robot file from {url} -> ignored")
+            
+    return (updated_links, len(links) - len(updated_links))
+
 def get_unvisited_size(conn):
     with conn.cursor() as curs:
         curs.execute("SELECT Count(url) FROM crawling WHERE content IS NULL")
@@ -66,12 +87,14 @@ def crawler(conn):
         with conn:
             url = fetch_next_url(conn)
             links = explore_url(url, conn)
+            links, removed = remove_robots(links)
             unvisited_size = get_unvisited_size(conn)
             total_size = get_total_size(conn)
             
             if unvisited_size < 1000:
                 insert_links(conn, links)
-                
+            
+            print(f"\tremoved {removed}")
             print(f"\t{unvisited_size}/{total_size}")
             sleep(0.100)
 
