@@ -54,10 +54,22 @@ def remove_robots(links: list[str]):
         if discovered_robots_file.get(parsed_url.netloc) is None:
             robot_url = f"{parsed_url.scheme}://{parsed_url.netloc}/robots.txt"
             try:
-                robot_file_request_response = requests.get(robot_url, timeout=10)
-                discovered_robots_file[parsed_url.netloc] = robot_file_request_response.text
+                robot_file_request_response = requests.get(robot_url, timeout=2)
+                robot_file_content = robot_file_request_response.text
+                
+                if (robot_file_request_response.status_code == 404):
+                    robot_file_content = ""
+                else:
+                    robot_file_request_response.raise_for_status()
+                discovered_robots_file[parsed_url.netloc] = robot_file_content
+            except requests.HTTPError as he:
+                if he.response.status_code is None:
+                    # Propagate to next to display the error if exception not related to http status
+                    raise he
+                else:
+                    continue
             except Exception as e:
-                print(f"\t Error retrieving robot file from {url} -> ignored")
+                print(f"\tError retrieving robot file from {url} -> ignored")
                 print(e)
                 continue
         
