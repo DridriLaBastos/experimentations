@@ -28,7 +28,8 @@
 				"mhutchie.git-graph",
 				"wayou.vscode-todo-highlight",
 				"coderabbit.coderabbit-vscode",
-				"docker.docker"
+				"docker.docker",
+				"ms-azuretools.vscode-docker"
 			]
 		}
 	}

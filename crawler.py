@@ -1,17 +1,26 @@
 import requests
-from urllib.request import urlopen, Request
-from urllib.parse import urljoin, urlparse
+import psycopg2
+import os
+from urllib.parse import urljoin
 from bs4 import BeautifulSoup
 from timeit import default_timer as timer
 from time import sleep
-from collections import deque
-from random import randint
 
-def PerformCrawling(currentUrl: str):
-    print(f"Currently crawling {currentUrl}")
+def fetch_next_url(conn):
+    with conn.cursor() as curs:
+        curs.execute("""
+                 WITH not_visited AS (SELECT url FROM pending_urls WHERE NOT visited)
+                 SELECT url FROM not_visited OFFSET Random(0,(
+	                SELECT Count(url) FROM not_visited) - 1)
+                 LIMIT 1;
+                 """)
+        return curs.fetchone()[0]
+
+def explore_url(url: str, conn):
+    print(f"Currently crawling {url}")
     
     begin = timer()
-    response = requests.get(currentUrl, headers={"User-Agent": "Mozilla/5.0"}, timeout=30)
+    response = requests.get(url, headers={"User-Agent": "Mozilla/5.0"}, timeout=30)
     fetchTimeMs = (timer() - begin) * 1000
     links = []
     
@@ -24,36 +33,56 @@ def PerformCrawling(currentUrl: str):
         for a in soup.find_all("a", href=True):
             href = a["href"].strip()
             if href.startswith(("http", '/')):
-                links.append(urljoin(currentUrl, href))
+                links.append(urljoin(url, href))
     
+    # TODO: The whole thing is not thread safe
+    with conn.cursor() as curs:
+        curs.execute("UPDATE pending_urls SET visited = true WHERE url = %s", (url,))
     return links
 
-def crawler():
-    urls = ["http://fr.wikipedia.org/wiki/Hasard"]
-    visited = set()
-    count = 0
-    _pass = 0
-    
-    while len(urls) != 0:
-        currentUrl = urls.pop(randint(0, len(urls) - 1))
-        count += 1
-        _pass += 1
-        
-        if currentUrl in visited:
-            continue
-        
-        foundUrls = PerformCrawling(currentUrl)
-        visited.add(currentUrl)
-        
-        disp = f"[{_pass}] "
-        if len(urls) < 10000:
-            exclusiveUrls = [url for url in foundUrls if url not in visited]
-            inclusiveUrs  = [url for url in foundUrls if url     in visited]
-            urls.extend(exclusiveUrls)
-            disp += f"{len(foundUrls)}/{len(exclusiveUrls)}/{len(inclusiveUrs)} "
-        disp += f"remaining: {len(urls)}"
-        print(disp)
-        sleep(0.1)
+def get_unvisited_size(conn):
+    with conn.cursor() as curs:
+        curs.execute("SELECT Count(url) FROM pending_urls WHERE NOT visited")
+        return curs.fetchone()[0]
+
+def get_total_size(conn):
+    with conn.cursor() as curs:
+        curs.execute("SELECT Count(url) FROM pending_urls")
+        return curs.fetchone()[0]
+
+def insert_links(conn, links: list[str]):
+    # TODO: Optimizes this
+    with conn.cursor() as curs:
+        for link in links:
+            curs.execute(""" 
+                        INSERT INTO pending_urls VALUES (%s,%s) ON CONFLICT (url) DO NOTHING
+                        """, (link,'false',))
+
+def crawler(conn):
+    while True:
+        with conn:
+            url = fetch_next_url(conn)
+            links = explore_url(url, conn)
+            unvisited_size = get_unvisited_size(conn)
+            total_size = get_total_size(conn)
+            
+            if unvisited_size < 1000:
+                insert_links(conn, links)
+                
+            print(f"\t{unvisited_size}/{total_size}")
+            sleep(0.100)
+
+def main():
+    conn = psycopg2.connect(
+        dbname=os.environ.get("DB_NAME", "google"),
+        user=os.environ.get("DB_USER", "developer"),
+        password=os.environ["DB_PASSWORD"],  # Required, no default
+        host=os.environ.get("DB_HOST", "db")
+    )
+    try:
+        crawler(conn)
+    finally:
+        conn.close()
 
 if __name__ == "__main__":
-    crawler()
+    main()
