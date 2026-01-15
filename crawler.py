@@ -21,7 +21,7 @@ def explore_url(url: str, conn):
     print(f"Currently crawling {url}")
     
     begin = timer()
-    response = requests.get(url, headers={"User-Agent": "Mozilla/5.0"}, timeout=30)
+    response = requests.get(url, headers={"User-Agent": "Mozilla/5.0"}, timeout=10)
     fetchTimeMs = (timer() - begin) * 1000
     links = []
     
@@ -44,23 +44,31 @@ def explore_url(url: str, conn):
         curs.execute("UPDATE crawling SET content = %s WHERE url = %s", (content, url,))
     return links
 
+discovered_robots_file: dict[str, str] = {}
 def remove_robots(links: list[str]):
     updated_links = []
     
     for url in links:
         parsed_url = urlparse(url)
-        robot_url = f"{parsed_url.scheme}://{parsed_url.netloc}/robots.txt"
-        rp = RobotFileParser()
-        rp.set_url(robot_url)
         
-        try:
-            rp.read()
-            canfetch = rp.can_fetch("Mozilla/5.0",url)
-            if canfetch:
-                updated_links.append(url)
-            # TODO: If a robot file can't be retrieve, apparently, according to the standard, it means that all url are valid
-        except Exception as e:
-            print(f"Error retrieving robot file from {url} -> ignored")
+        if discovered_robots_file.get(parsed_url.netloc) is None:
+            robot_url = f"{parsed_url.scheme}://{parsed_url.netloc}/robots.txt"
+            try:
+                robot_file_request_response = requests.get(robot_url, timeout=10)
+                discovered_robots_file[parsed_url.netloc] = robot_file_request_response.text
+            except Exception as e:
+                print(f"\t Error retrieving robot file from {url} -> ignored")
+                print(e)
+                continue
+        
+        robot_file = discovered_robots_file.get(parsed_url.netloc)
+        assert robot_file is not None
+        rp = RobotFileParser()
+        rp.parse(robot_file.splitlines())
+        
+        canfetch = rp.can_fetch("Mozilla/5.0",url)
+        if canfetch:
+            updated_links.append(url)
             
     return (updated_links, len(links) - len(updated_links))
 
@@ -85,17 +93,19 @@ def insert_links(conn, links: list[str]):
 def crawler(conn):
     while True:
         with conn:
+            begin = timer()
             url = fetch_next_url(conn)
-            links = explore_url(url, conn)
-            links, removed = remove_robots(links)
+            total_links = explore_url(url, conn)
+            links, removed_count = remove_robots(total_links)
             unvisited_size = get_unvisited_size(conn)
             total_size = get_total_size(conn)
             
-            if unvisited_size < 1000:
+            if unvisited_size < 5000:
                 insert_links(conn, links)
-            
-            print(f"\tremoved {removed}")
+            elapsed = timer() - begin
+            print(f"\tGot {len(total_links)} adding {len(links)} removed {removed_count}")
             print(f"\t{unvisited_size}/{total_size}")
+            print(f"\t{elapsed:.3f}s")
             sleep(0.100)
 
 def main():
