@@ -7,19 +7,58 @@ from bs4 import BeautifulSoup
 from timeit import default_timer as timer
 from time import sleep
 
+DISCOVERING_BATCH_SIZE = 50
+def fetch_url_batch_set(conn, batch_size = DISCOVERING_BATCH_SIZE):
+    # TODO: By doing so, if an error arrives during the execution of the program the remaning urls are lost
+    with conn.cursor() as curs:
+        curs.execute("""
+                     DELETE FROM pending WHERE url IN (SELECT url FROM pending LIMIT 50 FOR UPDATE SKIP LOCKED) RETURNING url
+                     """)
+        return [fetch_result[0] for fetch_result in curs.fetchall()]
+
 def fetch_next_url(conn):
     with conn.cursor() as curs:
         curs.execute("""
-                 WITH not_visited AS (SELECT url FROM crawling WHERE content IS NULL)
-                 SELECT url FROM not_visited OFFSET Random(0,(
-	                SELECT Count(url) FROM not_visited) - 1)
-                 LIMIT 1;
-                 """)
-        return curs.fetchone()[0]
+                     DELETE FROM pending WHERE url IN (SELECT url FROM pending LIMIT 1 FOR UPDATE SKIP LOCKED) RETURNING url
+                     """)
+        next_url = curs.fetchone()[0]
+        print(f"Crawling {next_url}")
+        return next_url
+
+discovered_robots_file: dict[str, str] = {}
+def is_forbiden(url: str):
+    parsed_url = urlparse(url)
+    robot_url = f"{parsed_url.scheme}://{parsed_url.netloc}/robots.txt"
+    robot_file_cached = discovered_robots_file.get(parsed_url.netloc) is None
+    print(f"Getting robots from {robot_url} -> { "cached" if robot_file_cached else "fetching" }")
+    
+    if not robot_file_cached:
+        try:
+            robot_file_request_response = requests.get(robot_url, timeout=2)
+            robot_file_content = robot_file_request_response.text
+            
+            if (robot_file_request_response.status_code == 404):
+                robot_file_content = ""
+            else:
+                robot_file_request_response.raise_for_status()
+            discovered_robots_file[parsed_url.netloc] = robot_file_content
+        except requests.HTTPError as he:
+            if he.response.status_code is None:
+                # Propagate to next to display the error if exception not related to http status
+                raise he
+        except Exception as e:
+            print(f"\tError retrieving robot file from {robot_url} -> ignored")
+            print(e)
+            return False
+        
+        robot_file = discovered_robots_file.get(parsed_url.netloc)
+        assert robot_file is not None
+        rp = RobotFileParser()
+        rp.parse(robot_file.splitlines())
+        
+        return rp.can_fetch("Mozilla/5.0",url)
 
 def explore_url(url: str, conn):
-    print(f"Currently crawling {url}")
-    
     begin = timer()
     response = requests.get(url, headers={"User-Agent": "Mozilla/5.0"}, timeout=10)
     fetchTimeMs = (timer() - begin) * 1000
@@ -39,54 +78,16 @@ def explore_url(url: str, conn):
                 links.append(urljoin(url, href))
     
         content = " ".join(soup.get_text(separator=' ').lower().split())
+        
     # TODO: The whole thing is not thread safe
     with conn.cursor() as curs:
-        curs.execute("UPDATE crawling SET content = %s WHERE url = %s", (content, url,))
+        # curs.execute("UPDATE crawling SET content = %s WHERE url = %s", (content, url,))
+        curs.execute("INSERT INTO crawling VALUES (%s,%s)", (url, content, ))
     return links
-
-discovered_robots_file: dict[str, str] = {}
-def remove_robots(links: list[str]):
-    updated_links = []
-    
-    for url in links:
-        parsed_url = urlparse(url)
-        
-        if discovered_robots_file.get(parsed_url.netloc) is None:
-            robot_url = f"{parsed_url.scheme}://{parsed_url.netloc}/robots.txt"
-            try:
-                robot_file_request_response = requests.get(robot_url, timeout=2)
-                robot_file_content = robot_file_request_response.text
-                
-                if (robot_file_request_response.status_code == 404):
-                    robot_file_content = ""
-                else:
-                    robot_file_request_response.raise_for_status()
-                discovered_robots_file[parsed_url.netloc] = robot_file_content
-            except requests.HTTPError as he:
-                if he.response.status_code is None:
-                    # Propagate to next to display the error if exception not related to http status
-                    raise he
-                else:
-                    continue
-            except Exception as e:
-                print(f"\tError retrieving robot file from {url} -> ignored")
-                print(e)
-                continue
-        
-        robot_file = discovered_robots_file.get(parsed_url.netloc)
-        assert robot_file is not None
-        rp = RobotFileParser()
-        rp.parse(robot_file.splitlines())
-        
-        canfetch = rp.can_fetch("Mozilla/5.0",url)
-        if canfetch:
-            updated_links.append(url)
-            
-    return (updated_links, len(links) - len(updated_links))
 
 def get_unvisited_size(conn):
     with conn.cursor() as curs:
-        curs.execute("SELECT Count(url) FROM crawling WHERE content IS NULL")
+        curs.execute("SELECT Count(url) FROM pending")
         return curs.fetchone()[0]
 
 def get_total_size(conn):
@@ -99,24 +100,26 @@ def insert_links(conn, links: list[str]):
     with conn.cursor() as curs:
         for link in links:
             curs.execute(""" 
-                        INSERT INTO crawling VALUES (%s,null) ON CONFLICT (url) DO NOTHING
+                        INSERT INTO pending VALUES (%s) ON CONFLICT (url) DO NOTHING
                         """, (link,))
 
 def crawler(conn):
     while True:
         with conn:
             begin = timer()
-            url = fetch_next_url(conn)
-            total_links = explore_url(url, conn)
-            links, removed_count = remove_robots(total_links)
+            crawling_url = fetch_next_url(conn)
+            url_fetch_forbiden = is_forbiden(crawling_url)
+            if url_fetch_forbiden:
+                continue
+            
+            linked_url = explore_url(crawling_url, conn)
             unvisited_size = get_unvisited_size(conn)
             total_size = get_total_size(conn)
             
             if unvisited_size < 5000:
-                insert_links(conn, links)
+                insert_links(conn, linked_url)
             elapsed = timer() - begin
-            print(f"\tGot {len(total_links)} adding {len(links)} removed {removed_count}")
-            print(f"\t{unvisited_size}/{total_size}")
+            print(f"\t{unvisited_size}/{total_size}/{len(linked_url)}")
             print(f"\t{elapsed:.3f}s")
             sleep(0.100)
 
