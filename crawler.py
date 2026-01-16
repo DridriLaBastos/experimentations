@@ -29,12 +29,12 @@ discovered_robots_file: dict[str, str] = {}
 def is_forbiden(url: str):
     parsed_url = urlparse(url)
     robot_url = f"{parsed_url.scheme}://{parsed_url.netloc}/robots.txt"
-    robot_file_cached = discovered_robots_file.get(parsed_url.netloc) is None
+    robot_file_cached = discovered_robots_file.get(parsed_url.netloc) is not None
     print(f"Getting robots from {robot_url} -> { "cached" if robot_file_cached else "fetching" }")
     
     if not robot_file_cached:
         try:
-            robot_file_request_response = requests.get(robot_url, timeout=2)
+            robot_file_request_response = requests.get(robot_url, headers={"User-Agent": "Mozilla/5.0"}, timeout=2,)
             robot_file_content = robot_file_request_response.text
             
             if (robot_file_request_response.status_code == 404):
@@ -46,17 +46,19 @@ def is_forbiden(url: str):
             if he.response.status_code is None:
                 # Propagate to next to display the error if exception not related to http status
                 raise he
+            else:
+                return True
         except Exception as e:
             print(f"\tError retrieving robot file from {robot_url} -> ignored")
             print(e)
-            return False
+            return True
         
         robot_file = discovered_robots_file.get(parsed_url.netloc)
         assert robot_file is not None
         rp = RobotFileParser()
         rp.parse(robot_file.splitlines())
         
-        return rp.can_fetch("Mozilla/5.0",url)
+        return not rp.can_fetch("Mozilla/5.0",url)
 
 def explore_url(url: str, conn):
     begin = timer()
@@ -82,7 +84,7 @@ def explore_url(url: str, conn):
     # TODO: The whole thing is not thread safe
     with conn.cursor() as curs:
         # curs.execute("UPDATE crawling SET content = %s WHERE url = %s", (content, url,))
-        curs.execute("INSERT INTO crawling VALUES (%s,%s)", (url, content, ))
+        curs.execute("INSERT INTO crawling VALUES (%s,%s) ON CONFLICT DO NOTHING", (url, content, ))
     return links
 
 def get_unvisited_size(conn):
@@ -110,6 +112,7 @@ def crawler(conn):
             crawling_url = fetch_next_url(conn)
             url_fetch_forbiden = is_forbiden(crawling_url)
             if url_fetch_forbiden:
+                print("*** FORBIDEN BY ROBOTS.TXT ***")
                 continue
             
             linked_url = explore_url(crawling_url, conn)
