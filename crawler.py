@@ -6,14 +6,15 @@ from urllib.robotparser import RobotFileParser
 from bs4 import BeautifulSoup
 from timeit import default_timer as timer
 from time import sleep
+import redis
 
 DISCOVERING_BATCH_SIZE = 50
 def fetch_url_batch_set(conn, batch_size = DISCOVERING_BATCH_SIZE):
     # TODO: By doing so, if an error arrives during the execution of the program the remaning urls are lost
     with conn.cursor() as curs:
         curs.execute("""
-                     DELETE FROM pending WHERE url IN (SELECT url FROM pending LIMIT 50 FOR UPDATE SKIP LOCKED) RETURNING url
-                     """)
+                     DELETE FROM pending WHERE url IN (SELECT url FROM pending LIMIT %s FOR UPDATE SKIP LOCKED) RETURNING url
+                     """, (batch_size,))
         return [fetch_result[0] for fetch_result in curs.fetchall()]
 
 def fetch_next_url(conn):
@@ -87,6 +88,11 @@ def explore_url(url: str, conn):
         curs.execute("INSERT INTO crawling VALUES (%s,%s) ON CONFLICT DO NOTHING", (url, content, ))
     return links
 
+def push_links(r: redis.Redis, links: list[str]):
+    # * to unpacke the list and send it as multiple arguments
+    if len(links) > 0:
+        r.lpush("url",*links)
+
 def get_unvisited_size(conn):
     with conn.cursor() as curs:
         curs.execute("SELECT Count(url) FROM pending")
@@ -105,17 +111,21 @@ def insert_links(conn, links: list[str]):
                         INSERT INTO pending VALUES (%s) ON CONFLICT (url) DO NOTHING
                         """, (link,))
 
-def crawler(conn):
+def crawler(conn, redis):
     while True:
         with conn:
             begin = timer()
             crawling_url = fetch_next_url(conn)
-            url_fetch_forbiden = is_forbiden(crawling_url)
-            if url_fetch_forbiden:
-                print("*** FORBIDEN BY ROBOTS.TXT ***")
-                continue
             
+            # The script 'robots.py' check for the ability of the url in robots.txt of the file
+            # Every url put into the pending database is guaranteed to be available to fetch
+            # Thus it is not necessary anymore to check the robots file for the url fetcched
+            # WARNING:  Is it a possible case that an available URL at the time robots.py
+            #           checked it becomes unavailable when we fetches it from here ?
+            #           seems mostly unpossible 
             linked_url = explore_url(crawling_url, conn)
+            push_links(redis, linked_url)
+            
             unvisited_size = get_unvisited_size(conn)
             total_size = get_total_size(conn)
             
@@ -133,10 +143,10 @@ def main():
         password=os.environ["POSTGRES_PASSWORD"],  # Required, no default
         host=os.environ.get("DB_HOST", "db")
     )
-    try:
-        crawler(conn)
-    finally:
-        conn.close()
+    r = redis.Redis(host="redis", decode_responses=True)
+    with conn, r:
+        r.ping()
+        crawler(conn, r)
 
 if __name__ == "__main__":
     main()
