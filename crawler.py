@@ -54,12 +54,12 @@ def is_forbiden(url: str):
             print(e)
             return True
         
-        robot_file = discovered_robots_file.get(parsed_url.netloc)
-        assert robot_file is not None
-        rp = RobotFileParser()
-        rp.parse(robot_file.splitlines())
-        
-        return not rp.can_fetch("Mozilla/5.0",url)
+    robot_file = discovered_robots_file.get(parsed_url.netloc)
+    assert robot_file is not None
+    rp = RobotFileParser()
+    rp.parse(robot_file.splitlines())
+    
+    return not rp.can_fetch("Mozilla/5.0",url)
 
 def explore_url(url: str, conn):
     begin = timer()
@@ -113,28 +113,28 @@ def insert_links(conn, links: list[str]):
 
 def crawler(conn, redis):
     while True:
-        with conn:
-            begin = timer()
-            crawling_url = fetch_next_url(conn)
-            
-            # The script 'robots.py' check for the ability of the url in robots.txt of the file
-            # Every url put into the pending database is guaranteed to be available to fetch
-            # Thus it is not necessary anymore to check the robots file for the url fetcched
-            # WARNING:  Is it a possible case that an available URL at the time robots.py
-            #           checked it becomes unavailable when we fetches it from here ?
-            #           seems mostly unpossible 
-            linked_url = explore_url(crawling_url, conn)
-            push_links(redis, linked_url)
-            
-            unvisited_size = get_unvisited_size(conn)
-            total_size = get_total_size(conn)
-            
-            if unvisited_size < 5000:
-                insert_links(conn, linked_url)
-            elapsed = timer() - begin
-            print(f"\t{unvisited_size}/{total_size}/{len(linked_url)}")
-            print(f"\t{elapsed:.3f}s")
-            sleep(0.100)
+        begin = timer()
+        crawling_url = fetch_next_url(conn)
+        
+        # The script 'robots.py' check for the ability of the url in robots.txt of the file
+        # Every url put into the pending database is guaranteed to be available to fetch
+        # Thus it is not necessary anymore to check the robots file for the url fetcched
+        # WARNING:  Is it a possible case that an available URL at the time robots.py
+        #           checked it becomes unavailable when we fetches it from here ?
+        #           seems mostly unpossible 
+        linked_url = explore_url(crawling_url, conn)
+        push_links(redis, linked_url)
+        
+        unvisited_size = get_unvisited_size(conn)
+        total_size = get_total_size(conn)
+        
+        if unvisited_size < 5000:
+            insert_links(conn, linked_url)
+        conn.commit()
+        elapsed = timer() - begin
+        print(f"\t{unvisited_size}/{total_size}/{len(linked_url)}")
+        print(f"\t{elapsed:.3f}s")
+        sleep(0.100)
 
 def main():
     conn = psycopg2.connect(
