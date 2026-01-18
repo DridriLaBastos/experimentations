@@ -22,7 +22,7 @@ def prettier(url: str, text: str):
     if old_size == 0:
         print(f"*** EMPTY ***")
         return text
-    new_string = ' '.join([content for content in text.split(' ') if content not in ['mais', 'où', 'et', 'donc', 'or', 'ni', 'car', 'le', 'la', 'les', 'je', 'tu', 'il', 'elle', 'on', 'nous', 'vous', 'ils', 'elles'] ])
+    new_string = ' '.join([content for content in text.split() if content not in ['mais', 'où', 'et', 'donc', 'or', 'ni', 'car', 'le', 'la', 'les', 'je', 'tu', 'il', 'elle', 'on', 'nous', 'vous', 'ils', 'elles'] ])
     new_size = len(new_string)
     
     print(f"\t{old_size} -> {new_size} : reduction {(1 - new_size / old_size) * 100:.2}%")

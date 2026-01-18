@@ -89,7 +89,7 @@ def explore_url(url: str, conn):
     return links
 
 def push_links(r: redis.Redis, links: list[str]):
-    # * to unpacke the list and send it as multiple arguments
+    # to unpack the list and send it as multiple arguments
     if len(links) > 0:
         r.lpush("url",*links)
 
