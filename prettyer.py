@@ -19,6 +19,9 @@ INPUT_BATCH_SIZE = 10
 def prettier(url: str, text: str):
     old_size = len(text)
     print(f"Working on {url}")
+    if old_size == 0:
+        print(f"*** EMPTY ***")
+        return text
     new_string = ' '.join([content for content in text.split(' ') if content not in ['mais', 'où', 'et', 'donc', 'or', 'ni', 'car', 'le', 'la', 'les', 'je', 'tu', 'il', 'elle', 'on', 'nous', 'vous', 'ils', 'elles'] ])
     new_size = len(new_string)
     
