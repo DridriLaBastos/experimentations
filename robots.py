@@ -59,7 +59,6 @@ def send_batch(conn, batch: list[str], batch_size=10):
                 INSERT INTO pending VALUES (%s) ON CONFLICT DO NOTHING
                 """, (url,)
             )
-    conn.commit()
     batch.clear()
     print(f"\tbatch sent")
     return True
@@ -67,20 +66,23 @@ def send_batch(conn, batch: list[str], batch_size=10):
 def get_queue_size(r: redis.Redis):
     return r.llen("url")
 
-def robot(r: redis.Redis, conn):
+def robot(conn, r: redis.Redis):
     authorized_url_batch: list[str] = []
     queue_size = get_queue_size(r)
     while True:
+        # Out of the with clause because the redis command will hang until data are available
+        # and will block a connection context on postgres
         next_url = pop_url(r)
-        url_forbidden = is_forbidden(next_url)
-        if url_forbidden:
-            print("\t*** ROBOT FORBIDDEN ***")
-            continue
-        
-        authorized_url_batch.append(next_url)
-        if send_batch(conn, authorized_url_batch):
-            queue_size = get_queue_size(r)
-        print(f"\tleft: {queue_size}")
+        with conn:
+            url_forbidden = is_forbidden(next_url)
+            if url_forbidden:
+                print("\t*** ROBOT FORBIDDEN ***")
+                continue
+            
+            authorized_url_batch.append(next_url)
+            if send_batch(conn, authorized_url_batch):
+                queue_size = get_queue_size(r)
+            print(f"\tleft: {queue_size}")
 
 def main():
     conn = psycopg2.connect(
@@ -91,9 +93,12 @@ def main():
     )
     r = redis.Redis(host="redis", decode_responses=True)
     
-    with conn, r:
+    try:
         r.ping()
-        robot(r, conn)
+        robot(conn, r)
+    finally:
+        conn.close()
+        r.close()
 
 if __name__ == "__main__":
     main()

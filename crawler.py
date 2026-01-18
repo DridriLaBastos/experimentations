@@ -111,30 +111,34 @@ def insert_links(conn, links: list[str]):
                         INSERT INTO pending VALUES (%s) ON CONFLICT (url) DO NOTHING
                         """, (link,))
 
+def crawler_step(conn, redis):
+    begin = timer()
+    crawling_url = fetch_next_url(conn)
+    
+    # The script 'robots.py' check for the ability of the url in robots.txt of the file
+    # Every url put into the pending database is guaranteed to be available to fetch
+    # Thus it is not necessary anymore to check the robots file for the url fetched
+    # WARNING:  Is it a possible case that an available URL at the time robots.py
+    #           checked it becomes unavailable when we fetches it from here ?
+    #           seems mostly impossible 
+    linked_url = explore_url(crawling_url, conn)
+    push_links(redis, linked_url)
+    
+    unvisited_size = get_unvisited_size(conn)
+    total_size = get_total_size(conn)
+    
+    if unvisited_size < 5000:
+        insert_links(conn, linked_url)
+    conn.commit()
+    elapsed = timer() - begin
+    print(f"\t{unvisited_size}/{total_size}/{len(linked_url)}")
+    print(f"\t{elapsed:.3f}s")
+
 def crawler(conn, redis):
     while True:
-        begin = timer()
-        crawling_url = fetch_next_url(conn)
-        
-        # The script 'robots.py' check for the ability of the url in robots.txt of the file
-        # Every url put into the pending database is guaranteed to be available to fetch
-        # Thus it is not necessary anymore to check the robots file for the url fetcched
-        # WARNING:  Is it a possible case that an available URL at the time robots.py
-        #           checked it becomes unavailable when we fetches it from here ?
-        #           seems mostly unpossible 
-        linked_url = explore_url(crawling_url, conn)
-        push_links(redis, linked_url)
-        
-        unvisited_size = get_unvisited_size(conn)
-        total_size = get_total_size(conn)
-        
-        if unvisited_size < 5000:
-            insert_links(conn, linked_url)
-        conn.commit()
-        elapsed = timer() - begin
-        print(f"\t{unvisited_size}/{total_size}/{len(linked_url)}")
-        print(f"\t{elapsed:.3f}s")
-        sleep(0.100)
+        with conn:
+            crawler_step(conn, redis)
+            sleep(0.100)
 
 def main():
     conn = psycopg2.connect(
@@ -144,9 +148,12 @@ def main():
         host=os.environ.get("DB_HOST", "db")
     )
     r = redis.Redis(host="redis", decode_responses=True)
-    with conn, r:
+    try:
         r.ping()
         crawler(conn, r)
+    finally:
+        conn.close()
+        r.close()
 
 if __name__ == "__main__":
     main()

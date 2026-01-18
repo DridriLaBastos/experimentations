@@ -51,10 +51,10 @@ def prettier_from_database(output):
     # In that case the output database is also the input
     input = output
     while True:
-        input_batch: list[tuple[str,str]] = database_fetch_batch(input)
-        processed_batch = [(url, prettier(url,content)) for url, content in input_batch]
-        send_input_batch(output,processed_batch)
-        input.commit()
+        with output:
+            input_batch: list[tuple[str,str]] = database_fetch_batch(input)
+            processed_batch = [(url, prettier(url,content)) for url, content in input_batch]
+            send_input_batch(output,processed_batch)
         
 
 def prettier_from_redis(output):
@@ -70,14 +70,17 @@ def main():
 
     source: str = args.source
     
-    with output:
+    try: 
         if source == "redis":
             prettier_from_redis(output)
-        
+            
         elif source == "database":
             prettier_from_database(output)
-    
-    assert False
+        
+        else:
+            raise Exception(f"Unimplemented source {source}")
+    finally:
+        output.close()
 
 if __name__ == "__main__":
     main()
