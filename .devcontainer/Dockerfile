@@ -2,7 +2,7 @@ FROM python:3.14
 
 ENV PYTHONUNBUFFERED=1
 
-RUN git config --global core.editor=nano
+RUN git config --global core.editor nano
 
 # [Optional] If your requirements rarely change, uncomment this section to add them to the image.
 # COPY requirements.txt /tmp/pip-tmp/

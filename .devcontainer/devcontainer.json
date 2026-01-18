@@ -29,7 +29,8 @@
 				"wayou.vscode-todo-highlight",
 				"coderabbit.coderabbit-vscode",
 				"docker.docker",
-				"ms-azuretools.vscode-docker"
+				"ms-azuretools.vscode-docker",
+				"streetsidesoftware.code-spell-checker"
 			]
 		}
 	}

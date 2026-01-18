@@ -33,7 +33,7 @@ def is_forbidden(url: str):
                 robot_file_request_response.raise_for_status()
             discovered_robots_file[parsed_url.netloc] = robot_file_content
         except requests.HTTPError as he:
-            # Do not bloat the output console with erro messages from all the status code
+            # Do not bloat the output console with error messages from all the status codes
             return True
         except Exception as e:
             print(f"\tError retrieving robot file from {robot_url} -> ignored")
@@ -71,10 +71,9 @@ def robot(r: redis.Redis, conn):
     authorized_url_batch: list[str] = []
     queue_size = get_queue_size(r)
     while True:
-        conn.commit()
         next_url = pop_url(r)
-        url_forbiden = is_forbidden(next_url)
-        if url_forbiden:
+        url_forbidden = is_forbidden(next_url)
+        if url_forbidden:
             print("\t*** ROBOT FORBIDDEN ***")
             continue
         
