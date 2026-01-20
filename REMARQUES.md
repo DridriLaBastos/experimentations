@@ -1,0 +1,1 @@
+* In my python scripts I often retrieve the content of a url from the database and split it. Maybe just store the content as a split array of words?

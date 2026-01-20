@@ -6,8 +6,10 @@ import redis;
 import psycopg2
 import os
 import requests
+import time
 from urllib.parse import urlparse
 from urllib.robotparser import RobotFileParser
+
 
 def pop_url(r: redis.Redis):
         response = r.brpop(["url"])
@@ -47,9 +49,7 @@ def is_forbidden(url: str):
     
     return not rp.can_fetch("Mozilla/5.0",url)
 
-def send_batch(conn, batch: list[str], batch_size=10):
-    if len(batch) < batch_size:
-        return False
+def send_batch(conn, batch: list[str]):
 
     with conn.cursor() as curs:
         # TODO optimizes this command to insert multiple urls at once
@@ -61,7 +61,6 @@ def send_batch(conn, batch: list[str], batch_size=10):
             )
     batch.clear()
     print(f"\tbatch sent")
-    return True
 
 def get_queue_size(r: redis.Redis):
     return r.llen("url")
@@ -72,6 +71,7 @@ def robot(conn, r: redis.Redis):
     while True:
         # Out of the with clause because the redis command will hang until data are available
         # and will block a connection context on postgres
+        time.sleep(0.200)
         next_url = pop_url(r)
         with conn:
             url_forbidden = is_forbidden(next_url)
@@ -80,9 +80,10 @@ def robot(conn, r: redis.Redis):
                 continue
             
             authorized_url_batch.append(next_url)
-            if send_batch(conn, authorized_url_batch):
-                queue_size = get_queue_size(r)
-            print(f"\tleft: {queue_size}")
+            if len(authorized_url_batch) > 500:
+                send_batch(conn, authorized_url_batch)
+        queue_size = get_queue_size(r)
+        print(f"\tleft: {queue_size}")
 
 def main():
     conn = psycopg2.connect(

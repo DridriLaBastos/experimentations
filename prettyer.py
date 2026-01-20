@@ -5,6 +5,7 @@ The goal of this script is to remove non pertinent word from page web to decreas
 import argparse
 import psycopg2
 import os
+import time
 
 from redis import Redis
 
@@ -14,7 +15,7 @@ parser = argparse.ArgumentParser(description="Removes unrelevent world from web 
 parser.add_argument("--source", choices=choices, default=choices[0])
 args = parser.parse_args()
 
-INPUT_BATCH_SIZE = 10
+INPUT_BATCH_SIZE = 100
 
 def prettier(url: str, text: str):
     old_size = len(text)
@@ -49,12 +50,20 @@ def send_input_batch(output, input_batch: list[tuple[str,str]]):
 
 def prettier_from_database(output):
     # In that case the output database is also the input
+    exponential_backoff_values = [1,2,4,8,16,32,64]
+    backoff_index = 0
     input = output
     while True:
         with output:
             input_batch: list[tuple[str,str]] = database_fetch_batch(input)
-            processed_batch = [(url, prettier(url,content)) for url, content in input_batch]
-            send_input_batch(output,processed_batch)
+            
+            if input_batch:
+                processed_batch = [(url, prettier(url,content)) for url, content in input_batch]
+                send_input_batch(output,processed_batch)
+                backoff_index = 0
+            else:
+                backoff_index = max(backoff_index + 1, len(exponential_backoff_values) - 1)
+        time.sleep(exponential_backoff_values[backoff_index])
         
 
 def prettier_from_redis(output):

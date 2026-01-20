@@ -111,6 +111,9 @@ def insert_links(conn, links: list[str]):
                         INSERT INTO pending VALUES (%s) ON CONFLICT (url) DO NOTHING
                         """, (link,))
 
+def get_robot_pending_url_count(r: redis.Redis):
+    return r.llen("url")
+
 def crawler_step(conn, redis):
     begin = timer()
     crawling_url = fetch_next_url(conn)
@@ -131,14 +134,15 @@ def crawler_step(conn, redis):
         insert_links(conn, linked_url)
     conn.commit()
     elapsed = timer() - begin
-    print(f"\t{unvisited_size}/{total_size}/{len(linked_url)}")
+    robot_pending_url_count = get_robot_pending_url_count(redis)
+    print(f"\t{unvisited_size}/{total_size}/{len(linked_url)}/{robot_pending_url_count}")
     print(f"\t{elapsed:.3f}s")
 
 def crawler(conn, redis):
     while True:
         with conn:
             crawler_step(conn, redis)
-            sleep(0.100)
+        sleep(0.100)
 
 def main():
     conn = psycopg2.connect(
