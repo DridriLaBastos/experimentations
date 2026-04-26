@@ -1,163 +1,110 @@
-import requests
-import psycopg2
 import os
-from urllib.parse import urljoin, urlparse
-from urllib.robotparser import RobotFileParser
-from bs4 import BeautifulSoup
-from timeit import default_timer as timer
-from time import sleep
-import redis
+import psycopg2
+import requests
 
-DISCOVERING_BATCH_SIZE = 50
-def fetch_url_batch_set(conn, batch_size = DISCOVERING_BATCH_SIZE):
-    # TODO: By doing so, if an error arrives during the execution of the program the remaning urls are lost
-    with conn.cursor() as curs:
-        curs.execute("""
-                     DELETE FROM pending WHERE url IN (SELECT url FROM pending LIMIT %s FOR UPDATE SKIP LOCKED) RETURNING url
-                     """, (batch_size,))
-        return [fetch_result[0] for fetch_result in curs.fetchall()]
+from psycopg2.extras import execute_values
+
+from urllib.parse import urljoin,urlparse
+from urllib.robotparser import RobotFileParser
+
+from bs4 import BeautifulSoup
+from time import sleep
+from timeit import default_timer as timer
 
 def fetch_next_url(conn):
     with conn.cursor() as curs:
         curs.execute("""
-                     DELETE FROM pending WHERE url IN (SELECT url FROM pending LIMIT 1 FOR UPDATE SKIP LOCKED) RETURNING url
+                     SELECT url FROM pending LIMIT 1 FOR UPDATE SKIP LOCKED
                      """)
-        next_url = curs.fetchone()[0]
-        print(f"Crawling {next_url}")
-        return next_url
+        next_url = curs.fetchone()
+        return next_url[0]
 
-discovered_robots_file: dict[str, str] = {}
-def is_forbiden(url: str):
+discovered_robot_files: dict[str,str] = {}
+def can_fetch(url: str):
     parsed_url = urlparse(url)
     robot_url = f"{parsed_url.scheme}://{parsed_url.netloc}/robots.txt"
-    robot_file_cached = discovered_robots_file.get(parsed_url.netloc) is not None
-    print(f"Getting robots from {robot_url} -> { "cached" if robot_file_cached else "fetching" }")
+    robot_file_cached = discovered_robot_files.get(parsed_url.netloc) is not None
+    print(f"Getting robots from {robot_url} -> {"cached" if robot_file_cached else "fetching"}")
     
     if not robot_file_cached:
         try:
-            robot_file_request_response = requests.get(robot_url, headers={"User-Agent": "Mozilla/5.0"}, timeout=2,)
+            robot_file_request_response = requests.get(robot_url, headers={"User-Agent": "Mozilla/5.0"}, timeout=2)
             robot_file_content = robot_file_request_response.text
             
-            if (robot_file_request_response.status_code == 404):
+            # Missing or empty robot file indicates that agent can access everything on the site (trsuted IA on this)
+            if robot_file_request_response.status_code == 404:
+                robot_file_request_response.status_code = 200
                 robot_file_content = ""
-            else:
-                robot_file_request_response.raise_for_status()
-            discovered_robots_file[parsed_url.netloc] = robot_file_content
-        except requests.HTTPError as he:
-            if he.response.status_code is None:
-                # Propagate to next to display the error if exception not related to http status
-                raise he
-            else:
-                return True
+            
+            robot_file_request_response.raise_for_status()
+            
+            discovered_robot_files[parsed_url.netloc] = robot_file_content
+        except requests.HTTPError:
+            # Do not bloat the output console with error messages from all the status code
+            return False
         except Exception as e:
             print(f"\tError retrieving robot file from {robot_url} -> ignored")
-            print(e)
-            return True
-        
-    robot_file = discovered_robots_file.get(parsed_url.netloc)
-    assert robot_file is not None
-    rp = RobotFileParser()
-    rp.parse(robot_file.splitlines())
+            return False
     
-    return not rp.can_fetch("Mozilla/5.0",url)
+    robot_file_content = discovered_robot_files.get(parsed_url.netloc)
+    
+    # Sanity check, should not be None at this stage
+    assert robot_file_content is not None
+    rp = RobotFileParser()
+    rp.parse(robot_file_content.splitlines())
+    return rp.can_fetch("Mozilla/5.0",url)
+    
 
-def explore_url(url: str, conn):
+def fetch_url_content(url):
     begin = timer()
     response = requests.get(url, headers={"User-Agent": "Mozilla/5.0"}, timeout=10)
-    fetchTimeMs = (timer() - begin) * 1000
-    links = []
+    fetchTimeS = timer() - begin
+    response.raise_for_status()
+    return (response.text, fetchTimeS)
+
+def parse_url(url):
+    text = ""
+    neighbors = []
+    urlContent, fetchTimeS = fetch_url_content(url)
+    soup = BeautifulSoup(urlContent,"html.parser")
     
-    content = ""
-    
-    if "text/html" in response.headers.get("Content-Type", ""):
-        begin = timer()
-        soup = BeautifulSoup(response.text, "html.parser")
-        parseTimeMs = (timer() - begin) * 1000
-        print(f"\tfetch: {fetchTimeMs:.2f}ms   parsing: {parseTimeMs:.2f}ms")
-        
-        for a in soup.find_all("a", href=True):
-            href = a["href"].strip()
-            if href.startswith(("http", '/')):
-                links.append(urljoin(url, href))
-    
-        content = " ".join(soup.get_text(separator=' ').lower().split())
-        
-    # TODO: The whole thing is not thread safe
+    for a in soup.find_all("a", href=True):
+        href = a["href"].strip()
+        if href.startswith(("http",'/')):
+            neighbors.append(urljoin(url,href))
+    return urlContent, neighbors, fetchTimeS
+
+def upload_neighbors(links: list[str], conn):
     with conn.cursor() as curs:
-        # curs.execute("UPDATE crawling SET content = %s WHERE url = %s", (content, url,))
-        curs.execute("INSERT INTO crawling VALUES (%s,%s) ON CONFLICT DO NOTHING", (url, content, ))
-    return links
+        execute_values(curs, "INSERT INTO pending (url) VALUES %s", [link for link in links])
 
-def push_links(r: redis.Redis, links: list[str]):
-    # to unpack the list and send it as multiple arguments
-    if len(links) > 0:
-        r.lpush("url",*links)
-
-def get_unvisited_size(conn):
-    with conn.cursor() as curs:
-        curs.execute("SELECT Count(url) FROM pending")
-        return curs.fetchone()[0]
-
-def get_total_size(conn):
-    with conn.cursor() as curs:
-        curs.execute("SELECT Count(url) FROM crawling")
-        return curs.fetchone()[0]
-
-def insert_links(conn, links: list[str]):
-    # TODO: Optimizes this
-    with conn.cursor() as curs:
-        for link in links:
-            curs.execute(""" 
-                        INSERT INTO pending VALUES (%s) ON CONFLICT (url) DO NOTHING
-                        """, (link,))
-
-def get_robot_pending_url_count(r: redis.Redis):
-    return r.llen("url")
-
-def crawler_step(conn, redis):
-    begin = timer()
-    crawling_url = fetch_next_url(conn)
+def upload_content(content: str, conn):
+    pass
     
-    # The script 'robots.py' check for the ability of the url in robots.txt of the file
-    # Every url put into the pending database is guaranteed to be available to fetch
-    # Thus it is not necessary anymore to check the robots file for the url fetched
-    # WARNING:  Is it a possible case that an available URL at the time robots.py
-    #           checked it becomes unavailable when we fetches it from here ?
-    #           seems mostly impossible 
-    linked_url = explore_url(crawling_url, conn)
-    push_links(redis, linked_url)
+def crawler_step(conn):
+    crawlingUrl = fetch_next_url(conn)
+    print(f"Crawling {crawlingUrl}")
+    authorized = can_fetch(crawlingUrl)
     
-    unvisited_size = get_unvisited_size(conn)
-    total_size = get_total_size(conn)
+    if not authorized:
+        print(f"Unauthorized -> skipping")
+        return
     
-    if unvisited_size < 5000:
-        insert_links(conn, linked_url)
-    conn.commit()
-    elapsed = timer() - begin
-    robot_pending_url_count = get_robot_pending_url_count(redis)
-    print(f"\t{unvisited_size}/{total_size}/{len(linked_url)}/{robot_pending_url_count}")
-    print(f"\t{elapsed:.3f}s")
+    content, neighbors, fetchTimeS = parse_url(crawlingUrl)
+    print(f"Fetch Time : {fetchTimeS:.3}s")
+    upload_neighbors(neighbors, conn)
+    upload_content(content, conn)
 
-def crawler(conn, redis):
+def crawler(conn):
     while True:
         with conn:
-            crawler_step(conn, redis)
+            crawler_step(conn)
         sleep(0.100)
 
 def main():
-    conn = psycopg2.connect(
-        dbname=os.environ.get("DB_NAME", "gogole"),
-        user=os.environ.get("DB_USER", "developer"),
-        password=os.environ["POSTGRES_PASSWORD"],  # Required, no default
-        host=os.environ.get("DB_HOST", "db")
-    )
-    r = redis.Redis(host="redis", decode_responses=True)
-    try:
-        r.ping()
-        crawler(conn, r)
-    finally:
-        conn.close()
-        r.close()
+    conn = psycopg2.connect(os.environ.get('POSTGRES_PENDING_URL'))
+    crawler(conn)
+    
 
 if __name__ == "__main__":
     main()
