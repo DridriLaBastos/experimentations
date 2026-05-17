@@ -2,8 +2,6 @@ import os
 import psycopg2
 import requests
 
-from psycopg2.extras import execute_values
-
 from urllib.parse import urljoin,urlparse
 from urllib.robotparser import RobotFileParser
 
@@ -67,19 +65,23 @@ def parse_url(url):
     neighbors = []
     urlContent, fetchTimeS = fetch_url_content(url)
     soup = BeautifulSoup(urlContent,"html.parser")
+    text = soup.get_text(strip=True, separator=' ')
     
     for a in soup.find_all("a", href=True):
         href = a["href"].strip()
         if href.startswith(("http",'/')):
             neighbors.append(urljoin(url,href))
-    return urlContent, neighbors, fetchTimeS
+    return text, neighbors, fetchTimeS
 
 def upload_neighbors(links: list[str], conn):
+    # TODO: Optimize this -> check 'execute_values' at https://www.psycopg.org/docs/extras.html#fast-execution-helpers
     with conn.cursor() as curs:
-        execute_values(curs, "INSERT INTO pending (url) VALUES %s", [link for link in links])
+        for link in links:
+            curs.execute("INSERT INTO pending (url) VALUES (%s) ON CONFLICT (url) DO NOTHING", (link,))
 
-def upload_content(content: str, conn):
-    pass
+def upload_content(url: str, content: str, conn):
+    with conn.cursor() as curs:
+        curs.execute("INSERT INTO crawled (url,content) VALUES (%s,%s)",((url,content)))
     
 def crawler_step(conn):
     crawlingUrl = fetch_next_url(conn)
@@ -93,7 +95,7 @@ def crawler_step(conn):
     content, neighbors, fetchTimeS = parse_url(crawlingUrl)
     print(f"Fetch Time : {fetchTimeS:.3}s")
     upload_neighbors(neighbors, conn)
-    upload_content(content, conn)
+    upload_content(crawlingUrl, content, conn)
 
 def crawler(conn):
     while True:
