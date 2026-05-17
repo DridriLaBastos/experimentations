@@ -2,6 +2,8 @@ import os
 import psycopg2
 import requests
 
+from psycopg2.extras import execute_values
+
 from urllib.parse import urljoin,urlparse
 from urllib.robotparser import RobotFileParser
 
@@ -75,9 +77,8 @@ def parse_url(url):
 
 def upload_neighbors(links: list[str], conn):
     # TODO: Optimize this -> check 'execute_values' at https://www.psycopg.org/docs/extras.html#fast-execution-helpers
-    with conn.cursor() as curs:
-        for link in links:
-            curs.execute("INSERT INTO pending (url) VALUES (%s) ON CONFLICT (url) DO NOTHING", (link,))
+    with conn.cursor() as cur:
+        execute_values(cur, "INSERT INTO pending (url) VALUES %s ON CONFLICT (url) DO NOTHING", [(link,) for link in links])
 
 def upload_content(url: str, content: str, conn):
     with conn.cursor() as curs:
