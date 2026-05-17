@@ -13,11 +13,11 @@ from timeit import default_timer as timer
 
 def fetch_next_url(conn):
     with conn.cursor() as curs:
-        curs.execute("""
-                     SELECT url FROM pending LIMIT 1 FOR UPDATE SKIP LOCKED
-                     """)
+        curs.execute(
+            "DELETE FROM pending WHERE url IN (SELECT url FROM pending FOR UPDATE SKIP LOCKED LIMIT 1) RETURNING *"
+            )
         next_url = curs.fetchone()
-        return next_url[0]
+    return next_url[0]
 
 discovered_robot_files: dict[str,str] = {}
 def can_fetch(url: str):
