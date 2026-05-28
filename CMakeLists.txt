@@ -34,6 +34,5 @@ if (${MSVC})
 else()
 	add_compile_options(-Wall -Wextra)
 endif()
-include_directories(${CMAKE_SOURCE_DIR})
 
-add_subdirectory(util)
+add_executable(song main.cpp)
