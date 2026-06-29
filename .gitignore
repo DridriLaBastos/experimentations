@@ -1,4 +1,1 @@
-cmake-build*
-.DS_Store
-target
-*.lock
+cmake*
