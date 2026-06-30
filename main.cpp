@@ -22,21 +22,26 @@ int main(int argc, char const *argv[])
     sockaddr_in addr;
     addr.sin_family = AF_INET;
     addr.sin_addr.s_addr = htonl(INADDR_ANY);
-    addr.sin_port = 8333;
+    addr.sin_port = htons(8333);
 
     char buf [1];
     sockaddr_in other;
     long otherLen = sizeof(other);
+    ssize_t received;
 
     if(bind(s,(sockaddr*)&addr,sizeof(addr))) {
-        std::cerr << std::format("[ERROR] Unable to bin to port 8333. Errno {} : '{}'\n", errno, strerror(errno));
+        std::cerr << std::format("[ERROR] Unable to bin to port 8333. Errno {}:{}\n", errno, strerror(errno));
         goto clean;
     }
 
+    received = recvfrom(s, buf,sizeof(buf),0,(sockaddr*)&other,(socklen_t*)&otherLen);
 
-    recvfrom(s, buf,sizeof(buf),0,(sockaddr*)&other,(socklen_t*)&otherLen);
-
-    std::cout << std::format("Got data from {}:{}", inet_ntoa(other.sin_addr), ntohs(other.sin_port));
+    if (received < 0) {
+        std::cerr << std::format("[WARNING] Unable to receive data. Errno {}:{}\n",errno,strerror(errno));
+        goto clean;
+    } else {
+        std::cout << std::format("[INFO] Got {} octets from {}:{}\n", received, inet_ntoa(other.sin_addr), ntohs(other.sin_port));
+    }
 
 
 clean:
