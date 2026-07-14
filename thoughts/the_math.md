@@ -1,12 +1,13 @@
-![fully connected neural network with 2 inputs one hidden layerof two neuron and one output](images/nn.jpg "example network")
+# Representation of fully connected nn
+![](images/nn.jpg "example network")
 
-Première couche :
+## Première couche
 
 $a_1 = x_1w_{11} + x_2w_{12} + b_1$
 
 $a_2 = x_1w_{21} + x_2w_{22} + b_2$
 
-Notation matricielle:
+### Notation matricielle:
 
 $$
 \begin{pmatrix}
@@ -26,8 +27,10 @@ b_1 & b_2
 \end{pmatrix})
 $$
 
-Deuxième couche:
+## Deuxième couche
 
-$ o = \sigma(a_1 * w_3 + a_2*w_4) $
+$$
+ o = \sigma(a_1 * w_3 + a_2*w_4)
+$$
 
 Pour une couche i : $Y_i = \sigma(A_iW_i + B_i)$
