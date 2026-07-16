@@ -14,6 +14,7 @@ struct Mat {
     std::unique_ptr<_Type> data;
 
     Mat (const size_t r, const size_t c);
+    Mat (const size_t r, const size_t c, const _Type x);
 
     std::ostream& Print(std::ostream& s) const;
 
@@ -32,6 +33,9 @@ private:
     }
 
 };
+
+template <typename _Type>
+Mat<_Type>& Add (const Mat<_Type>& A, const Mat<_Type>& B, Mat<_Type>& dest);
 
 }
 

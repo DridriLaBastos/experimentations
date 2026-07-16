@@ -4,7 +4,12 @@
 
 int main(int argc, char const *argv[])
 {
-    NN::MATH::Mat m = NN::MATH::Mat<>::AtRandom(3,5,0,10);
-    std::cout << m << std::endl;
+    NN::MATH::Mat a (2,2,1);
+    NN::MATH::Mat b (2,2,1);
+
+    NN::MATH::Add(a,b,a);
+
+    std::cout << a << "- - - - - -\n" << b << "- - - - -\n" << a << std::endl;
+
     return 0;
 }

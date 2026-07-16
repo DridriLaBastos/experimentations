@@ -1,4 +1,5 @@
 #include <format>
+#include <stdexcept>
 
 #include "math/mat.hpp"
 #include "math/util.hpp"
@@ -7,6 +8,15 @@ template<typename _Type>
 NN::MATH::Mat<_Type>::Mat(const size_t r, const size_t c): rows{r}, cols{c}, data{ new _Type[r*c] }
 {
     //TODO: Maybe throw of allocation fails ?
+}
+
+template<typename _Type>
+NN::MATH::Mat<_Type>::Mat (const size_t r, const size_t c, const _Type x): Mat<_Type>(r,c)
+{
+    for (size_t i = 0; i < r*c; i+= 1)
+    {
+        this->data.get()[i] = x;
+    }
 }
 
 template <typename _Type>
@@ -46,4 +56,26 @@ template <typename _Type>
 std::ostream& operator<< (std::ostream& s, const NN::MATH::Mat<_Type>& m)
 {
     return m.Print(s);
+}
+
+
+template <typename _Type>
+NN::MATH::Mat<_Type>& NN::MATH::Add (const NN::MATH::Mat<_Type>& A, const NN::MATH::Mat<_Type>& B, NN::MATH::Mat<_Type>& dest)
+{
+    if ((A.cols != B.cols) || (A.rows != B.rows))
+    {
+        throw std::runtime_error(std::format("Mat::Add expects entry of size {}x{} but got {}x{}",A.rows,A.cols,B.rows,B.cols));
+    }
+
+    if ((B.cols != B.cols) || (B.rows != B.rows))
+    {
+        throw std::runtime_error(std::format("Mat::Add expects destination of size {}x{} but got {}x{}",A.rows,A.cols,dest.rows,dest.cols));
+    }
+
+    for (size_t i = 0; i < A.rows*A.cols; i += 1)
+    {
+        dest.data.get()[i] = A.data.get()[i] + B.data.get()[i];
+    }
+
+    return dest;
 }
