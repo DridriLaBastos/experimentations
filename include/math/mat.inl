@@ -32,12 +32,6 @@ NN::MATH::Mat<_Type> NN::MATH::Mat<_Type>::AtRandom (const size_t r, const size_
     return m;
 }
 
-template<typename _Type>
-NN::MATH::Mat<_Type>& NN::MATH::Mat<_Type>::Dot (NN::MATH::Mat<_Type>& res, const NN::MATH::Mat<_Type>& a, const NN::MATH::Mat<_Type>& b)
-{
-    
-}
-
 template <typename _Type>
 std::ostream& NN::MATH::Mat<_Type>::Print(std::ostream& s) const
 {
@@ -64,17 +58,48 @@ NN::MATH::Mat<_Type>& NN::MATH::Add (const NN::MATH::Mat<_Type>& A, const NN::MA
 {
     if ((A.cols != B.cols) || (A.rows != B.rows))
     {
-        throw std::runtime_error(std::format("Mat::Add expects entry of size {}x{} but got {}x{}",A.rows,A.cols,B.rows,B.cols));
+        throw std::runtime_error(std::format("Mat::Add expects entry of dimensions ({},{}) but got ({},{})",A.rows,A.cols,B.rows,B.cols));
     }
 
     if ((B.cols != B.cols) || (B.rows != B.rows))
     {
-        throw std::runtime_error(std::format("Mat::Add expects destination of size {}x{} but got {}x{}",A.rows,A.cols,dest.rows,dest.cols));
+        throw std::runtime_error(std::format("Mat::Add expects destination of dimensions ({},{}) but got ({},{})",A.rows,A.cols,dest.rows,dest.cols));
     }
 
     for (size_t i = 0; i < A.rows*A.cols; i += 1)
     {
         dest.data.get()[i] = A.data.get()[i] + B.data.get()[i];
+    }
+
+    return dest;
+}
+
+template <typename _Type>
+NN::MATH::Mat<_Type>& NN::MATH::Dot (const NN::MATH::Mat<_Type>& A, const NN::MATH::Mat<_Type>& B, NN::MATH::Mat<_Type>& dest)
+{
+    // 1x2 2x3 -> 1x3
+    if (A.cols != B.rows)
+    {
+        throw std::runtime_error(std::format("Mat::Dot expects entry of dimensions (_,{}) ({},_) but got (_,{}) ({},_)",A.cols,A.cols,A.cols,B.rows));
+    }
+
+    if ((dest.rows != A.rows) || (dest.cols != B.cols))
+    {
+        throw std::runtime_error(std::format("Mat::Dot expects dest of dimensions ({},{}) but got ({},{})",A.rows,B.cols,dest.rows,dest.cols));
+    }
+
+    const size_t n = A.cols;
+
+    for (size_t i = 0; i < dest.rows; i += 1)
+    {
+        for (size_t j = 0; j < dest.cols; j += 1)
+        {
+            dest.At(i,j) = 0;
+            for (size_t k = 0; k < n; k += 1)
+            {
+                dest.At(i,j) += A.At(i,k) * B.At(k,j);
+            }
+        }
     }
 
     return dest;

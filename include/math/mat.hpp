@@ -20,9 +20,6 @@ struct Mat {
 
     static Mat<_Type> AtRandom (const size_t r, const size_t c, const _Type min = 0, const _Type max = 1);
 
-    static Mat<_Type>& Dot (Mat<_Type>& res, const Mat<_Type>& a, const Mat<_Type>& b);
-
-private:
     // Utilities functions
     _Type& At (const size_t r, const size_t c) {
         return data.get()[r*cols + c];
@@ -36,6 +33,9 @@ private:
 
 template <typename _Type>
 Mat<_Type>& Add (const Mat<_Type>& A, const Mat<_Type>& B, Mat<_Type>& dest);
+
+template <typename _Type>
+Mat<_Type>& Dot (const Mat<_Type>& A, const Mat<_Type>& B, Mat<_Type>& dest);
 
 }
 
