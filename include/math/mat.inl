@@ -139,7 +139,7 @@ MATH::Mat<_Type>& MATH::Dot (const MATH::Mat<_Type>& A, const MATH::Mat<_Type>& 
 }
 
 template <typename _Type>
-MATH::Mat<_Type>& ApplyFunction (const std::function<_Type(_Type)> func, MATH::Mat<_Type>& M)
+MATH::Mat<_Type>& MATH::ApplyFunction (_Type(*func)(_Type), MATH::Mat<_Type>& M)
 {
     for (size_t i = 0; i < M.cols * M.rows; i += 1)
     {
