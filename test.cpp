@@ -4,12 +4,13 @@
 
 int main(int argc, char const *argv[])
 {
-    NN::MATH::Mat a (2,2,1);
-    NN::MATH::Mat b (2,2,1);
+    MATH::Mat a = MATH::Mat<>::AtRandom(3,2);
+    MATH::Mat b (3,2,1.f);
+    MATH::Mat id = MATH::Mat<>::Identity(2);
 
-    NN::MATH::Add(a,b,a);
+    MATH::Dot(a,id,b);        
 
-    std::cout << a << "- - - - - -\n" << b << "- - - - -\n" << a << std::endl;
+    std::cout << a << "- - - - - -\n" << id << "- - - - -\n" << b << std::endl;
 
     return 0;
 }

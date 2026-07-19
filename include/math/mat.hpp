@@ -6,7 +6,7 @@
 
 #include <stddef.h>
 
-namespace NN::MATH {
+namespace MATH {
 template <typename _Type = float>
 struct Mat {
     size_t rows;
@@ -41,7 +41,7 @@ Mat<_Type>& Dot (const Mat<_Type>& A, const Mat<_Type>& B, Mat<_Type>& dest);
 }
 
 template <typename _Type>
-std::ostream& operator<< (std::ostream& s, const NN::MATH::Mat<_Type>& m);
+std::ostream& operator<< (std::ostream& s, const MATH::Mat<_Type>& m);
 
 #include "math/mat.inl"
 
