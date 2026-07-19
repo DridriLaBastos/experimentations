@@ -64,13 +64,17 @@ MATH::Mat<_Type> MATH::Mat<_Type>::Identity (const size_t n)
 template <typename _Type>
 std::ostream& MATH::Mat<_Type>::Print(std::ostream& s) const
 {
+    s << "[\n";
     for (size_t r = 0; r < this->rows; r += 1)
     {
+        s << "\t";
         for (size_t c = 0; c < this->cols; c += 1) {
             s << std::format("{:4} ", this->At(r,c));
         }
         s << std::endl;
     }
+
+    s << "]";
 
     return s;
 }
@@ -132,4 +136,15 @@ MATH::Mat<_Type>& MATH::Dot (const MATH::Mat<_Type>& A, const MATH::Mat<_Type>& 
     }
 
     return dest;
+}
+
+template <typename _Type>
+MATH::Mat<_Type>& ApplyFunction (const std::function<_Type(_Type)> func, MATH::Mat<_Type>& M)
+{
+    for (size_t i = 0; i < M.cols * M.rows; i += 1)
+    {
+        M.data[i] = func(M.data[i]);
+    }
+
+    return M;
 }

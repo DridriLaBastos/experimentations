@@ -36,6 +36,8 @@ public:
     static Mat<_Type> Identity (const size_t n);
     static Mat<_Type> AtRandom (const size_t r, const size_t c, const _Type min = 0, const _Type max = 1);
 
+    static Mat<_Type>& ApplyFunction (const std::function<_Type(_Type)> func, Mat<_Type>& M);
+
 };
 
 template <typename _Type>
