@@ -33,6 +33,19 @@ NN::MATH::Mat<_Type> NN::MATH::Mat<_Type>::AtRandom (const size_t r, const size_
 }
 
 template <typename _Type>
+NN::MATH::Mat<_Type> NN::MATH::Mat<_Type>::Identity (const size_t n)
+{
+    Mat<_Type> m (n,n,0);
+
+    for (size_t i = 0; i < n; i += 1)
+    {
+        m.data.get()[i*n + i] = 1;
+    }
+
+    return m;
+}
+
+template <typename _Type>
 std::ostream& NN::MATH::Mat<_Type>::Print(std::ostream& s) const
 {
     for (size_t r = 0; r < this->rows; r += 1)

@@ -18,8 +18,6 @@ struct Mat {
 
     std::ostream& Print(std::ostream& s) const;
 
-    static Mat<_Type> AtRandom (const size_t r, const size_t c, const _Type min = 0, const _Type max = 1);
-
     // Utilities functions
     _Type& At (const size_t r, const size_t c) {
         return data.get()[r*cols + c];
@@ -28,6 +26,9 @@ struct Mat {
     const _Type& At (const size_t r, const size_t c) const {
         return data.get()[r*cols + c];
     }
+
+    static Mat<_Type> Identity (const size_t n);
+    static Mat<_Type> AtRandom (const size_t r, const size_t c, const _Type min = 0, const _Type max = 1);
 
 };
 
