@@ -5,7 +5,8 @@
 #include "math/util.hpp"
 
 template<typename _Type>
-MATH::Mat<_Type>::Mat(const size_t r, const size_t c): rows{r}, cols{c}, data{ new _Type[r*c] }
+MATH::Mat<_Type>::Mat(const size_t r, const size_t c, _Type* initData)
+    : managedData{initData ? nullptr : std::make_unique<_Type[]>(r * c)}, rows{r}, cols{c}, data{initData ? initData : managedData.get()}
 {
     //TODO: Maybe throw of allocation fails ?
 }
@@ -15,8 +16,23 @@ MATH::Mat<_Type>::Mat (const size_t r, const size_t c, const _Type x): Mat<_Type
 {
     for (size_t i = 0; i < r*c; i+= 1)
     {
-        this->data.get()[i] = x;
+        this->data[i] = x;
     }
+}
+
+template <typename _Type>
+MATH::Mat<_Type>::Mat (const size_t r, const size_t c, std::initializer_list<_Type> initData)
+    : managedData{nullptr}, rows{r}, cols{c}, data{nullptr}
+{
+    if (r == 0 || c == 0) {
+        throw std::runtime_error("Mat dimensions must be greater than zero");
+    }
+
+    if (initData.size() != r * c) {
+        throw std::runtime_error(std::format("Expected {} elements in initializer list, got {}", r * c, initData.size()));
+    }
+
+    data = const_cast<_Type*>(initData.begin());
 }
 
 template <typename _Type>
@@ -26,7 +42,7 @@ MATH::Mat<_Type> MATH::Mat<_Type>::AtRandom (const size_t r, const size_t c, con
 
     //TODO: We probably want to have iterators here
     for (size_t i = 0; i < r*c; i += 1) {
-        m.data.get()[i] = GetRandom<_Type>(min,max);
+        m.data[i] = GetRandom<_Type>(min,max);
     }
 
     return m;
@@ -39,7 +55,7 @@ MATH::Mat<_Type> MATH::Mat<_Type>::Identity (const size_t n)
 
     for (size_t i = 0; i < n; i += 1)
     {
-        m.data.get()[i*n + i] = 1;
+        m.data[i*n + i] = 1;
     }
 
     return m;
@@ -81,7 +97,7 @@ MATH::Mat<_Type>& MATH::Add (const MATH::Mat<_Type>& A, const MATH::Mat<_Type>& 
 
     for (size_t i = 0; i < A.rows*A.cols; i += 1)
     {
-        dest.data.get()[i] = A.data.get()[i] + B.data.get()[i];
+        dest.data[i] = A.data[i] + B.data[i];
     }
 
     return dest;

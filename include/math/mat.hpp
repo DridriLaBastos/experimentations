@@ -1,6 +1,7 @@
 #ifndef NN_MATH_MAT_HPP
 #define NN_MATH_MAT_HPP
 
+#include <initializer_list>
 #include <memory>
 #include <ostream>
 
@@ -9,22 +10,27 @@
 namespace MATH {
 template <typename _Type = float>
 struct Mat {
+private:
+    std::unique_ptr<_Type[]> managedData;
+
+public:
     size_t rows;
     size_t cols;
-    std::unique_ptr<_Type> data;
+    _Type* data;
 
-    Mat (const size_t r, const size_t c);
+    Mat (const size_t r, const size_t c, _Type* initData = nullptr);
     Mat (const size_t r, const size_t c, const _Type x);
+    Mat (const size_t r, const size_t c, std::initializer_list<_Type> initData);
 
     std::ostream& Print(std::ostream& s) const;
 
     // Utilities functions
     _Type& At (const size_t r, const size_t c) {
-        return data.get()[r*cols + c];
+        return data[r*cols + c];
     }
 
     const _Type& At (const size_t r, const size_t c) const {
-        return data.get()[r*cols + c];
+        return data[r*cols + c];
     }
 
     static Mat<_Type> Identity (const size_t n);
