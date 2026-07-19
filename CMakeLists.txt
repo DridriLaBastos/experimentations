@@ -11,6 +11,7 @@ else()
 	add_compile_options(-Wall -Wextra)
 endif()
 
-add_executable(test test.cpp)
+include_directories(${PROJECT_SOURCE_DIR}/include)
 
-target_include_directories(test PRIVATE ${CMAKE_SOURCE_DIR}/include)
+add_executable(test test.cpp)
+add_executable (example_xor_mat examples/mat_xor.cpp)
