@@ -1,0 +1,27 @@
+body {
+    width: 100vw;
+    height: 100vh;
+}
+
+#editor-container {
+    display: flex;
+    flex-direction: row;
+}
+
+.editor-view {
+    width: 50%;
+}
+
+#markdown-content {
+    white-space: pre-line;
+}
+
+p {
+    margin: 5;
+}
+
+.exg-title {
+    background-color: aliceblue;
+    font-weight: bold;
+    font-size: 1.3em;
+}

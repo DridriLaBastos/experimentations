@@ -1,0 +1,19 @@
+{% load static %}
+<!DOCTYPE html>
+
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        {% csrf_token %}
+        <script type="module" src={% static "writing/script.js" %} defer="true"></script>
+        <link rel="stylesheet" href={% static "writing/style.css" %}>
+        <title>{{ requested_document.name }}</title>
+    </head>
+<body data-document-id = "{{ requested_document.id }}">
+    <div id="editor-container">
+        <span class="editor-view" id="markdown-content" contenteditable="true">{{ requested_document.mddata }}</span>
+        <span class="editor-view" id="markdown-preview">{{ requested_document.htmldata }}</span>
+    </div>
+</body>
+</html>
