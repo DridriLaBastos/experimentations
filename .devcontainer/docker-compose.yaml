@@ -1,0 +1,10 @@
+services:
+  motion-canvas:
+    image: oven/bun:latest
+    working_dir: /workspace
+    network_mode: host
+    volumes:
+      - ..:/workspace
+    post_start:
+      - command: bun install
+    command: tail -f /dev/null
