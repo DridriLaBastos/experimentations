@@ -13,6 +13,11 @@
         <button type="submit">Disconnect</button>
     </form>
 
+    <form action="{%url "writing:document_create" %}" method="post">
+        {% csrf_token %}
+        <button type="submit">Create</button>
+    </form>
+
     {% for document in authorized_document_list %}
     
     <a href="{% url "writing:document_edition" document.id  %}"> {{ document.name }} </a>

@@ -16,10 +16,6 @@ body {
     white-space: pre-line;
 }
 
-p {
-    margin: 5;
-}
-
 .exg-title {
     background-color: aliceblue;
     font-weight: bold;
