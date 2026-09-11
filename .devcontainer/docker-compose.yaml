@@ -3,8 +3,6 @@ x-app-config: &app-env
   working_dir: /workspace
   volumes:
     - ..:/workspace
-  ports:
-    - "8000:8000"
   post_start:
     - command: bash -c "source bexig/.env"
     - command: bash -c "pip install -r requirements.txt"
@@ -12,11 +10,13 @@ x-app-config: &app-env
 services:
   prod:
     <<: *app-env
-    command: >-
-      bash -c "python manage.py runserver 0.0.0.0:8000"
+    command: bash -c "python manage.py runserver 0.0.0.0:8000"
+    ports:
+      - "8000:8000"
   
   dev:
     <<: *app-env
     command: tail -f /dev/null
+    network_mode: host
     pre_stop:
       - command: bash -c "python -m pip freeze > requirements.txt"
