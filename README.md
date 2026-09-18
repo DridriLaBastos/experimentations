@@ -1,2 +1,2 @@
-# experimentations
-A repository where I store my experimentations without them being a real project juste for when I want to have fun
+# Acc
+Creating a subset of the C programming language following this tutorial : https://github.com/DoctorWkt/acwj?tab=readme-ov-file

@@ -39,7 +39,6 @@ int main(int argc, char const *argv[])
 
 	Parsing_Init(fileDataBuffer,fileSizeInByte,&info);
 
-
 	while (Parsing_GetNextToken(&info,&token))
 	{
 		switch (token.type)
