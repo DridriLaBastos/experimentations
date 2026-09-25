@@ -1,2 +1,2 @@
-# experimentations
-A repository where I store my experimentations without them being a real project juste for when I want to have fun
+# Ants
+Ants (because the IDE can do anything) is a web based IDE similar to Firebase or gitpod. Nothing serious, just having fun

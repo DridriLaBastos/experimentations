@@ -1,0 +1,1 @@
+bash tools/containers.sh dev up
