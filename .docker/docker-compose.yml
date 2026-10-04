@@ -1,14 +1,9 @@
-x-django-backend-config: &backend-config
+x-go-backend-config: &backend-config
   build:
-      args:
-        - PORT=8001
       dockerfile: build-backend.dockerfile
   volumes:
     - ../backend:/workspace
   working_dir: /workspace
-  post_start:
-    - command: bash -c "source ants/.env"
-    - command: bash -c "pip install -r requirements.txt"
 
 services:
   vscode-server:
@@ -34,5 +29,3 @@ services:
     working_dir: /workspace
     network_mode: host
     command: ["tail", "-f", "/dev/null"]
-    pre_stop:
-      - command: python -m pip freeze > requirements.txt
