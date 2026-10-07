@@ -1,7 +1,10 @@
 package main
 
 import (
+	"log/slog"
+	"net"
 	"net/http"
+	"strings"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
@@ -12,10 +15,13 @@ func main() {
 
 	router.Use(middleware.Heartbeat("/health"))
 	router.Use(middleware.Logger)
-
-	router.Get("/ping", func(w http.ResponseWriter, r *http.Request) {
-		w.Write([]byte("pong"))
+	router.Get("/editor", func(w http.ResponseWriter, r *http.Request) {
+		http.Redirect(w,r,"http://localhost:3000", http.Redi)
 	})
 
-	http.ListenAndServe(":3000", router)
+	err := http.ListenAndServe(":8080", router)
+
+	if err != nil {
+		slog.Error(err.Error())
+	}
 }
