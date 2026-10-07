@@ -1,1 +1,1 @@
-bash tools/containers.sh dev up
+bash tools/dev-containers.sh up -d --build

@@ -1,1 +1,1 @@
-bash tools/containers.sh dev down
+bash tools/dev-containers.sh down
