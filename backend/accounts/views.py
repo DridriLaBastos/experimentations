@@ -1,6 +1,6 @@
 from django.http import HttpResponse
 from django.shortcuts import render
-from django.contrib.auth.decorators import login_not_required
+from django.contrib.auth.decorators import login_required
 
 from django.contrib.auth import authenticate, login
 
@@ -23,3 +23,7 @@ from django.contrib.auth import authenticate, login
 
 # def logout(request):
 #     logout(request)
+
+@login_required
+def profile(request):
+    return HttpResponse("Logged In")
