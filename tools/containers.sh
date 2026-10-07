@@ -1,1 +1,1 @@
-docker compose -f .docker/docker-compose.yml --profile $1 $2
+docker compose -f .docker/docker-compose.yml $@
